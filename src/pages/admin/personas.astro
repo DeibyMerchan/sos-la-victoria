@@ -1,0 +1,118 @@
+---
+import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
+import { supabase } from "../../lib/supabaseClient";
+
+if (Astro.request.method === "POST") {
+  const fd = await Astro.request.formData();
+  const action = (fd.get("_action") as string) || "";
+
+  if (action === "delete") {
+    const id = fd.get("id") as string;
+    if (id) {
+      await supabase.from("personas").delete().eq("id", id);
+    }
+  } else if (action === "estado") {
+    const id = fd.get("id") as string;
+    const estado = fd.get("estado") as string;
+    if (id && estado) {
+      await supabase.from("personas").update({ estado }).eq("id", id);
+    }
+  }
+
+  return Astro.redirect("/admin/personas?" + (Astro.url.searchParams.get("q") ? "q=" + encodeURIComponent(Astro.url.searchParams.get("q") || "") : ""));
+}
+
+let termino = Astro.url.searchParams.get("q") || "";
+let personas: any[] = [];
+
+if (termino) {
+  const { data } = await supabase.rpc("buscar_persona", { termino });
+  personas = data || [];
+} else {
+  const { data } = await supabase
+    .from("personas")
+    .select("id, nombres, apellidos, cedula, sin_cedula, telefono, sector, estado, refugio_id, acompanantes, created_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  personas = data || [];
+}
+---
+
+<LayoutAdmin>
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">Personas</h1>
+
+  <form method="GET" class="mb-6 flex gap-2">
+    <input
+      type="text"
+      name="q"
+      value={termino}
+      placeholder="Buscar por cédula, nombre o apellido..."
+      class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+    />
+    <button type="submit" class="bg-red-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-red-800 transition">
+      Buscar
+    </button>
+    {termino && (
+      <a href="/admin/personas" class="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition inline-flex items-center">
+        Limpiar
+      </a>
+    )}
+  </form>
+
+  <div class="bg-white rounded-xl shadow overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-gray-500">
+        <tr>
+          <th class="px-4 py-3 font-medium">Nombre</th>
+          <th class="px-4 py-3 font-medium">Cédula</th>
+          <th class="px-4 py-3 font-medium hidden sm:table-cell">Teléfono</th>
+          <th class="px-4 py-3 font-medium hidden sm:table-cell">Sector</th>
+          <th class="px-4 py-3 font-medium">Estado</th>
+          <th class="px-4 py-3 font-medium">Acomp.</th>
+          <th class="px-4 py-3 font-medium w-10"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {personas.length === 0 ? (
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-gray-400">
+              {termino ? "No se encontraron resultados." : "No hay personas registradas."}
+            </td>
+          </tr>
+        ) : (
+          personas.map((p: any) => (
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-medium">{p.nombres} {p.apellidos}</td>
+              <td class="px-4 py-3 text-gray-500">
+                {p.cedula.startsWith("SINCED-") ? (
+                  <span class="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Sin cédula</span>
+                ) : p.cedula}
+              </td>
+              <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">{p.telefono || "—"}</td>
+              <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">{p.sector || "—"}</td>
+              <td class="px-4 py-3">
+                <form method="POST" action={"/admin/personas" + (termino ? "?q=" + encodeURIComponent(termino) : "")} class="inline">
+                  <input type="hidden" name="_action" value="estado" />
+                  <input type="hidden" name="id" value={p.id} />
+                  <select name="estado" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white" onchange="this.form.submit()">
+                    <option value="en_vivienda" selected={p.estado === "en_vivienda"}>En vivienda</option>
+                    <option value="evacuado" selected={p.estado === "evacuado"}>Evacuado</option>
+                    <option value="en_refugio" selected={p.estado === "en_refugio"}>En refugio</option>
+                  </select>
+                </form>
+              </td>
+              <td class="px-4 py-3 text-center">{p.acompanantes}</td>
+              <td class="px-4 py-3">
+                <form method="POST" action={"/admin/personas" + (termino ? "?q=" + encodeURIComponent(termino) : "")} onsubmit="return confirm('¿Eliminar a esta persona?')">
+                  <input type="hidden" name="_action" value="delete" />
+                  <input type="hidden" name="id" value={p.id} />
+                  <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</LayoutAdmin>

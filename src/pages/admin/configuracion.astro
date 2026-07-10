@@ -1,0 +1,70 @@
+---
+import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
+import { supabase } from "../../lib/supabaseClient";
+
+if (Astro.request.method === "POST") {
+  const fd = await Astro.request.formData();
+
+  const contadorVisible = fd.get("contador_visible") === "on";
+  const whatsapp = (fd.get("whatsapp") as string).trim() || null;
+  const telefono = (fd.get("telefono") as string).trim() || null;
+  const refugioId = (fd.get("refugio_principal_id") as string).trim() || null;
+
+  await supabase.from("configuracion").update({
+    contador_visible: contadorVisible,
+    whatsapp,
+    telefono,
+    refugio_principal_id: refugioId,
+  }).eq("id", 1);
+
+  return Astro.redirect("/admin/configuracion");
+}
+
+const { data: config } = await supabase
+  .from("configuracion")
+  .select("*")
+  .eq("id", 1)
+  .single();
+
+const { data: refugios } = await supabase
+  .from("refugios")
+  .select("id, nombre")
+  .order("nombre");
+---
+
+<LayoutAdmin>
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">Configuración</h1>
+
+  <form method="POST" action="/admin/configuracion" class="bg-white rounded-xl shadow p-6 space-y-5 max-w-xl">
+    <div>
+      <label class="flex items-center gap-3">
+        <input type="checkbox" name="contador_visible" checked={config?.contador_visible ?? true} class="rounded border-gray-300 text-red-600 focus:ring-red-500" />
+        <span class="text-sm font-medium text-gray-700">Mostrar contador de personas en la página principal</span>
+      </label>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp (número con código de país)</label>
+      <input type="text" name="whatsapp" value={config?.whatsapp || ""} class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="+584121234567" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+      <input type="text" name="telefono" value={config?.telefono || ""} class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="+584121234567" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Refugio principal</label>
+      <select name="refugio_principal_id" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white">
+        <option value="">Ninguno</option>
+        {refugios?.map((r: any) => (
+          <option value={r.id} selected={config?.refugio_principal_id === r.id}>{r.nombre}</option>
+        ))}
+      </select>
+    </div>
+
+    <button type="submit" class="bg-red-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800 transition">
+      Guardar cambios
+    </button>
+  </form>
+</LayoutAdmin>

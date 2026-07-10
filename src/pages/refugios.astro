@@ -1,0 +1,57 @@
+---
+import LayoutPublico from "../layouts/LayoutPublico.astro";
+import Header from "../components/Header.astro";
+import TarjetaRefugio from "../components/TarjetaRefugio.astro";
+import { supabase } from "../lib/supabaseClient";
+
+const { data: refugios } = await supabase
+  .from("refugios")
+  .select("id, nombre, direccion, latitud, longitud, capacidad, ocupacion")
+  .eq("activo", true)
+  .order("nombre");
+---
+
+<LayoutPublico>
+  <Header />
+  <main class="max-w-lg mx-auto px-4 py-6 pb-10">
+    <a href="/" class="text-red-600 text-sm font-medium inline-flex items-center gap-1 mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Volver
+    </a>
+    <h1 class="text-2xl font-bold text-red-700 mb-6">Refugios</h1>
+
+    {refugios && refugios.length > 0 ? (
+      <div class="space-y-4">
+        {refugios.map((r) => (
+          <div>
+            <TarjetaRefugio
+              nombre={r.nombre}
+              direccion={r.direccion}
+              ocupacion={r.ocupacion}
+              capacidad={r.capacidad}
+            />
+            {r.latitud && r.longitud && (
+              <a
+                href={`https://www.google.com/maps?q=${r.latitud},${r.longitud}`}
+                target="_blank"
+                class="inline-flex items-center gap-1 text-blue-600 text-sm font-medium mt-2 ml-1 hover:underline"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Ver en Google Maps
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center text-gray-400 mt-12">
+        <p>No hay refugios registrados.</p>
+      </div>
+    )}
+  </main>
+</LayoutPublico>

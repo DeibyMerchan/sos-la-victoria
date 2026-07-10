@@ -1,0 +1,22 @@
+---
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#b91c1c" />
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>SOS La Victoria</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <slot />
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js");
+      }
+    </script>
+  </body>
+</html>

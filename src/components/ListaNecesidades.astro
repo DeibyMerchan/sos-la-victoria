@@ -1,0 +1,31 @@
+---
+interface Necesidad {
+  id: string;
+  nombre: string;
+  prioridad: "alta" | "media" | "baja";
+}
+
+const { necesidades } = Astro.props as { necesidades: Necesidad[] };
+
+const emojiPrioridad = {
+  alta: "\uD83D\uDD34",
+  media: "\uD83D\uDFE1",
+  baja: "\uD83D\uDFE2",
+} as const;
+---
+
+<div class="bg-white rounded-2xl shadow-md p-5">
+  <h3 class="font-bold text-lg text-gray-800 mb-4">Necesidades urgentes</h3>
+  {necesidades.length === 0 ? (
+    <p class="text-gray-400 text-sm">No hay necesidades registradas.</p>
+  ) : (
+    <ul class="space-y-2">
+      {necesidades.map((n) => (
+        <li class="flex items-center gap-3 text-sm text-gray-700 py-1.5 border-b border-gray-100 last:border-0">
+          <span class="text-lg">{emojiPrioridad[n.prioridad]}</span>
+          <span>{n.nombre}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>

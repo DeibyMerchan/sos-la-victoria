@@ -1,0 +1,33 @@
+---
+interface Noticia {
+  id: string;
+  titulo: string;
+  contenido: string;
+  created_at: string;
+}
+
+const { noticias } = Astro.props as { noticias: Noticia[] };
+---
+
+<div class="bg-white rounded-2xl shadow-md p-5">
+  <h3 class="font-bold text-lg text-gray-800 mb-4">Últimas noticias</h3>
+  {noticias.length === 0 ? (
+    <p class="text-gray-400 text-sm">No hay noticias disponibles.</p>
+  ) : (
+    <ul class="space-y-4">
+      {noticias.map((n) => (
+        <li class="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
+          <h4 class="font-semibold text-gray-800 text-sm">{n.titulo}</h4>
+          <p class="text-xs text-gray-400 mt-1">
+            {new Date(n.created_at).toLocaleDateString("es-VE", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+          <p class="text-sm text-gray-600 mt-1 line-clamp-3">{n.contenido}</p>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>

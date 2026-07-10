@@ -1,0 +1,119 @@
+---
+import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
+import { supabase } from "../../lib/supabaseClient";
+
+if (Astro.request.method === "POST") {
+  const fd = await Astro.request.formData();
+  const action = (fd.get("_action") as string) || "";
+
+  if (action === "create") {
+    const nombre = (fd.get("nombre") as string).trim();
+    const prioridad = (fd.get("prioridad") as string) || "media";
+    if (nombre) {
+      await supabase.from("necesidades").insert({ nombre, prioridad });
+    }
+  } else if (action === "delete") {
+    const id = fd.get("id") as string;
+    if (id) {
+      await supabase.from("necesidades").delete().eq("id", id);
+    }
+  } else if (action === "toggle") {
+    const id = fd.get("id") as string;
+    const activo = fd.get("activo") === "true";
+    if (id) {
+      await supabase.from("necesidades").update({ activo: !activo }).eq("id", id);
+    }
+  } else if (action === "prioridad") {
+    const id = fd.get("id") as string;
+    const prioridad = fd.get("prioridad") as string;
+    if (id && prioridad) {
+      await supabase.from("necesidades").update({ prioridad }).eq("id", id);
+    }
+  }
+
+  return Astro.redirect("/admin/necesidades");
+}
+
+const { data: necesidades } = await supabase
+  .from("necesidades")
+  .select("*")
+  .order("prioridad");
+---
+
+<LayoutAdmin>
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestionar Necesidades</h1>
+
+  <form method="POST" action="/admin/necesidades" class="bg-white rounded-xl shadow p-5 mb-6 space-y-4">
+    <input type="hidden" name="_action" value="create" />
+    <h2 class="font-semibold text-gray-700">Nueva necesidad</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Nombre *</label>
+        <input type="text" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Prioridad</label>
+        <select name="prioridad" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white">
+          <option value="alta">Alta</option>
+          <option value="media" selected>Media</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition">
+      Agregar necesidad
+    </button>
+  </form>
+
+  <div class="bg-white rounded-xl shadow overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-gray-500">
+        <tr>
+          <th class="px-4 py-3 font-medium">Nombre</th>
+          <th class="px-4 py-3 font-medium">Prioridad</th>
+          <th class="px-4 py-3 font-medium">Activo</th>
+          <th class="px-4 py-3 font-medium w-10"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {!necesidades || necesidades.length === 0 ? (
+          <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No hay necesidades registradas.</td></tr>
+        ) : (
+          necesidades.map((n: any) => (
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-medium">{n.nombre}</td>
+              <td class="px-4 py-3">
+                <form method="POST" action="/admin/necesidades" class="inline">
+                  <input type="hidden" name="_action" value="prioridad" />
+                  <input type="hidden" name="id" value={n.id} />
+                  <select name="prioridad" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white" onchange="this.form.submit()">
+                    <option value="alta" selected={n.prioridad === "alta"}>Alta</option>
+                    <option value="media" selected={n.prioridad === "media"}>Media</option>
+                    <option value="baja" selected={n.prioridad === "baja"}>Baja</option>
+                  </select>
+                </form>
+              </td>
+              <td class="px-4 py-3">
+                <form method="POST" action="/admin/necesidades" class="inline">
+                  <input type="hidden" name="_action" value="toggle" />
+                  <input type="hidden" name="id" value={n.id} />
+                  <input type="hidden" name="activo" value={String(n.activo)} />
+                  <button type="submit" class={`text-xs font-medium px-2 py-0.5 rounded-full ${n.activo ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                    {n.activo ? "Activo" : "Inactivo"}
+                  </button>
+                </form>
+              </td>
+              <td class="px-4 py-3">
+                <form method="POST" action="/admin/necesidades" onsubmit="return confirm('¿Eliminar esta necesidad?')">
+                  <input type="hidden" name="_action" value="delete" />
+                  <input type="hidden" name="id" value={n.id} />
+                  <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</LayoutAdmin>

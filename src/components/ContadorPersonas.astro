@@ -1,0 +1,24 @@
+<div id="contador-container" class="bg-white rounded-2xl shadow-md p-6 text-center">
+  <p class="text-sm text-gray-500 mb-2">Personas registradas hasta ahora</p>
+  <p id="contador-valor" class="text-4xl font-extrabold text-red-700">--</p>
+  <p id="contador-error" class="text-xs text-red-500 mt-2 hidden">Error al cargar</p>
+</div>
+
+<script>
+  const valorEl = document.getElementById("contador-valor");
+  const errorEl = document.getElementById("contador-error");
+
+  async function fetchContador() {
+    try {
+      const resp = await fetch("/api/contador");
+      const data = await resp.json();
+      if (valorEl) valorEl.textContent = data.contador ?? "--";
+      if (errorEl) errorEl.classList.add("hidden");
+    } catch {
+      if (errorEl) errorEl.classList.remove("hidden");
+    }
+  }
+
+  fetchContador();
+  setInterval(fetchContador, 45000);
+</script>
