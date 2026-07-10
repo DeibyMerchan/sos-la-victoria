@@ -13,8 +13,12 @@ if (Astro.request.method === "POST") {
   }
 
   const isProd = import.meta.env.PROD;
-  Astro.cookies.set("sb-access-token", data.session.access_token, { path: "/", httpOnly: true, secure: isProd, sameSite: "lax", maxAge: 3600 });
-  Astro.cookies.set("sb-refresh-token", data.session.refresh_token!, { path: "/", httpOnly: true, secure: isProd, sameSite: "lax", maxAge: 2592000 });
+  Astro.cookies.set("sb-access-token", data.session.access_token, {
+    path: "/", httpOnly: false, secure: isProd, sameSite: "lax", maxAge: 3600,
+  });
+  Astro.cookies.set("sb-refresh-token", data.session.refresh_token!, {
+    path: "/", httpOnly: false, secure: isProd, sameSite: "lax", maxAge: 2592000,
+  });
   return Astro.redirect("/admin");
 }
 
@@ -25,18 +29,57 @@ const errorMsg = Astro.url.searchParams.get("error") || "";
   <main class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
     <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
       <h1 class="text-2xl font-bold text-center text-red-700 mb-6">Admin — SOS La Victoria</h1>
-      <form method="POST" class="space-y-4">
+      <form method="POST" class="space-y-4" id="login-form">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Correo</label>
-          <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="admin@ejemplo.com" />
+          <input type="email" name="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="admin@ejemplo.com" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-          <input type="password" name="password" required class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="••••••••" />
+          <input type="password" name="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="••••••••" />
         </div>
-        {errorMsg && <div class="bg-red-50 text-red-700 text-sm rounded-xl p-3">{errorMsg}</div>}
-        <button type="submit" class="w-full bg-red-700 text-white font-bold py-3 rounded-xl hover:bg-red-800 transition">Iniciar sesión</button>
+        <div id="error-container">
+          {errorMsg && <div class="bg-red-50 text-red-700 text-sm rounded-xl p-3">{errorMsg}</div>}
+        </div>
+        <button type="submit" id="submit-btn" class="w-full bg-red-700 text-white font-bold py-3 rounded-xl hover:bg-red-800 transition disabled:opacity-50">
+          Iniciar sesión
+        </button>
       </form>
     </div>
   </main>
 </LayoutPublico>
+
+<script>
+  const form = document.getElementById("login-form") as HTMLFormElement;
+  const submitBtn = document.getElementById("submit-btn") as HTMLButtonElement;
+  const errorContainer = document.getElementById("error-container") as HTMLDivElement;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Iniciando sesión...";
+    errorContainer.innerHTML = "";
+
+    try {
+      const { supabase } = await import("../../lib/supabaseClient");
+      const email = (document.getElementById("email") as HTMLInputElement).value;
+      const password = (document.getElementById("password") as HTMLInputElement).value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error || !data.session) {
+        throw new Error(error?.message || "Credenciales inválidas");
+      }
+
+      const isSecure = location.protocol === "https:";
+      const secureFlag = isSecure ? "; Secure" : "";
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=3600; SameSite=Lax${secureFlag}`;
+      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=2592000; SameSite=Lax${secureFlag}`;
+
+      window.location.href = "/admin";
+    } catch (err: any) {
+      errorContainer.innerHTML = `<div class="bg-red-50 text-red-700 text-sm rounded-xl p-3">${err.message || "Error de conexión. Intente de nuevo."}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Iniciar sesión";
+    }
+  });
+</script>

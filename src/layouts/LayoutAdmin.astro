@@ -31,8 +31,9 @@
   <script>
     document.getElementById("btn-logout")?.addEventListener("click", async () => {
       await import("../lib/supabaseClient").then(m => m.supabase.auth.signOut());
-      document.cookie = "sb-access-token=; path=/; max-age=0";
-      document.cookie = "sb-refresh-token=; path=/; max-age=0";
+      const isSecure = location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${isSecure}`;
+      document.cookie = `sb-refresh-token=; path=/; max-age=0; SameSite=Lax${isSecure}`;
       window.location.href = "/admin/login";
     });
   </script>

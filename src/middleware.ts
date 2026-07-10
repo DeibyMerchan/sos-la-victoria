@@ -5,7 +5,19 @@ const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { url, cookies } = context;
+  const { url, cookies, request } = context;
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": url.origin,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Credentials": "true",
+      },
+    });
+  }
 
   if (url.pathname.startsWith("/admin") && url.pathname !== "/admin/login") {
     const accessToken = cookies.get("sb-access-token")?.value;
@@ -30,5 +42,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  return next();
+  const response = await next();
+
+  if (url.pathname.startsWith("/admin")) {
+    response.headers.set("Access-Control-Allow-Origin", url.origin);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
+  return response;
 });
