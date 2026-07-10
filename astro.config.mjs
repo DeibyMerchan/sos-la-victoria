@@ -6,6 +6,9 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
   site: "https://sos-la-victoria.vercel.app",
   output: "server",
+  security: {
+    checkOrigin: false,
+  },
   integrations: [tailwind(), sitemap()],
   adapter: vercel(),
 });
