@@ -13,20 +13,23 @@ if (Astro.request.method === "POST") {
   const t = (fd.get("titulo") as string).trim();
   const c = (fd.get("contenido") as string).trim();
 
-  if (action === "create" && t && c) {
-    const { error } = await supabaseAdmin.from("noticias").insert({ titulo: t, contenido: c });
-    mensaje = error ? "Error al publicar: " + error.message : "Noticia publicada.";
-  } else if (action === "update" && id && t && c) {
-    const { error } = await supabaseAdmin.from("noticias").update({ titulo: t, contenido: c }).eq("id", id);
-    if (!error) return Astro.redirect("/admin/noticias");
-    mensaje = "Error al actualizar: " + error.message;
-  } else if (action === "delete" && id) {
-    const { error } = await supabaseAdmin.from("noticias").delete().eq("id", id);
-    if (error) {
-      mensaje = "Error al eliminar: " + error.message;
-    } else {
-      return Astro.redirect("/admin/noticias");
+  try {
+    if (action === "create" && t && c) {
+      const { error } = await supabaseAdmin.from("noticias").insert({ titulo: t, contenido: c });
+      if (error) mensaje = "Error al publicar: " + error.message;
+    } else if (action === "update" && id && t && c) {
+      const { error } = await supabaseAdmin.from("noticias").update({ titulo: t, contenido: c }).eq("id", id);
+      if (error) mensaje = "Error al actualizar: " + error.message;
+    } else if (action === "delete" && id) {
+      const { error } = await supabaseAdmin.from("noticias").delete().eq("id", id);
+      if (error) mensaje = "Error al eliminar: " + error.message;
     }
+  } catch (e: any) {
+    mensaje = "Error: " + (e?.message || "Operacion fallida");
+  }
+
+  if (!mensaje) {
+    return Astro.redirect("/admin/noticias");
   }
 }
 
