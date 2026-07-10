@@ -1,19 +1,20 @@
 ---
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
-import { supabase } from "../../lib/supabaseClient";
+import { createSupabaseAdmin } from "../../lib/supabaseAdmin";
+const supabaseAdmin = createSupabaseAdmin();
 
 if (Astro.request.method === "POST") {
   const fd = await Astro.request.formData();
   const action = fd.get("_action") as string;
   const id = fd.get("id") as string;
-  if (action === "atender" && id) { await supabase.from("solicitudes_sos").update({ atendido: true }).eq("id", id); }
-  else if (action === "delete" && id) { await supabase.from("solicitudes_sos").delete().eq("id", id); }
+  if (action === "atender" && id) { await supabaseAdmin.from("solicitudes_sos").update({ atendido: true }).eq("id", id); }
+  else if (action === "delete" && id) { await supabaseAdmin.from("solicitudes_sos").delete().eq("id", id); }
   return Astro.redirect("/admin/sos");
 }
 
 let solicitudes: any[] = [];
 try {
-  const { data } = await supabase.from("solicitudes_sos").select("*").order("created_at", { ascending: false }).limit(100);
+  const { data } = await supabaseAdmin.from("solicitudes_sos").select("*").order("created_at", { ascending: false }).limit(100);
   if (data) solicitudes = data;
 } catch (_) {}
 ---

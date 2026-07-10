@@ -22,7 +22,11 @@ if (Astro.request.method === "POST") {
     mensaje = "Error al actualizar: " + error.message;
   } else if (action === "delete" && id) {
     const { error } = await supabaseAdmin.from("noticias").delete().eq("id", id);
-    mensaje = error ? "Error al eliminar: " + error.message : "";
+    if (error) {
+      mensaje = "Error al eliminar: " + error.message;
+    } else {
+      return Astro.redirect("/admin/noticias");
+    }
   }
 }
 

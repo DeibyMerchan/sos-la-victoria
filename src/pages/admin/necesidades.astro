@@ -1,19 +1,20 @@
 ---
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
-import { supabase } from "../../lib/supabaseClient";
+import { createSupabaseAdmin } from "../../lib/supabaseAdmin";
+const supabaseAdmin = createSupabaseAdmin();
 
 if (Astro.request.method === "POST") {
   const fd = await Astro.request.formData();
   const action = fd.get("_action") as string;
-  if (action === "create") { const n = (fd.get("nombre") as string).trim(); const p = (fd.get("prioridad") as string) || "media"; if (n) await supabase.from("necesidades").insert({ nombre: n, prioridad: p }); }
-  else if (action === "delete") { const id = fd.get("id") as string; if (id) await supabase.from("necesidades").delete().eq("id", id); }
-  else if (action === "toggle") { const id = fd.get("id") as string; const a = fd.get("activo") === "true"; if (id) await supabase.from("necesidades").update({ activo: !a }).eq("id", id); }
-  else if (action === "prioridad") { const id = fd.get("id") as string; const p = fd.get("prioridad") as string; if (id) await supabase.from("necesidades").update({ prioridad: p }).eq("id", id); }
+  if (action === "create") { const n = (fd.get("nombre") as string).trim(); const p = (fd.get("prioridad") as string) || "media"; if (n) await supabaseAdmin.from("necesidades").insert({ nombre: n, prioridad: p }); }
+  else if (action === "delete") { const id = fd.get("id") as string; if (id) await supabaseAdmin.from("necesidades").delete().eq("id", id); }
+  else if (action === "toggle") { const id = fd.get("id") as string; const a = fd.get("activo") === "true"; if (id) await supabaseAdmin.from("necesidades").update({ activo: !a }).eq("id", id); }
+  else if (action === "prioridad") { const id = fd.get("id") as string; const p = fd.get("prioridad") as string; if (id) await supabaseAdmin.from("necesidades").update({ prioridad: p }).eq("id", id); }
   return Astro.redirect("/admin/necesidades");
 }
 
 let necesidades: any[] = [];
-try { const { data } = await supabase.from("necesidades").select("*").order("prioridad"); if (data) necesidades = data; } catch (_) {}
+try { const { data } = await supabaseAdmin.from("necesidades").select("*").order("prioridad"); if (data) necesidades = data; } catch (_) {}
 ---
 
 <LayoutAdmin>

@@ -1,10 +1,11 @@
 ---
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
-import { supabase } from "../../lib/supabaseClient";
+import { createSupabaseAdmin } from "../../lib/supabaseAdmin";
+const supabaseAdmin = createSupabaseAdmin();
 
 if (Astro.request.method === "POST") {
   const fd = await Astro.request.formData();
-  await supabase.from("configuracion").update({
+  await supabaseAdmin.from("configuracion").update({
     contador_visible: fd.get("contador_visible") === "on",
     whatsapp: (fd.get("whatsapp") as string).trim() || null,
     telefono: (fd.get("telefono") as string).trim() || null,
@@ -16,9 +17,9 @@ if (Astro.request.method === "POST") {
 let config: any = {};
 let refugios: any[] = [];
 try {
-  const r1 = await supabase.from("configuracion").select("*").eq("id", 1).maybeSingle();
+  const r1 = await supabaseAdmin.from("configuracion").select("*").eq("id", 1).maybeSingle();
   if (r1.data) config = r1.data;
-  const r2 = await supabase.from("refugios").select("id, nombre").eq("activo", true).order("nombre");
+  const r2 = await supabaseAdmin.from("refugios").select("id, nombre").eq("activo", true).order("nombre");
   if (r2.data) refugios = r2.data;
 } catch (_) {}
 ---
