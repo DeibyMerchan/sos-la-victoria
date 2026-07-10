@@ -1,6 +1,7 @@
 ---
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
-import { supabase } from "../../lib/supabaseClient";
+import { createSupabaseAdmin } from "../../lib/supabaseAdmin";
+const supabaseAdmin = createSupabaseAdmin();
 
 const POR_PAGINA = 10;
 
@@ -12,7 +13,7 @@ function buildQS(q: string, pagina: number) {
 }
 
 let refugiosList: any[] = [];
-try { const { data } = await supabase.from("refugios").select("id, nombre").eq("activo", true).order("nombre"); if (data) refugiosList = data; } catch (_) {}
+try { const { data } = await supabaseAdmin.from("refugios").select("id, nombre").eq("activo", true).order("nombre"); if (data) refugiosList = data; } catch (_) {}
 
 const q = Astro.url.searchParams.get("q") || "";
 const pagina = Math.max(1, parseInt(Astro.url.searchParams.get("pagina") || "1") || 1);
@@ -24,14 +25,14 @@ if (Astro.request.method === "POST") {
   if (!id) {
     return Astro.redirect("/admin/personas" + buildQS(q, pagina));
   }
-  if (action === "delete") { await supabase.from("personas").delete().eq("id", id); }
+  if (action === "delete") { await supabaseAdmin.from("personas").delete().eq("id", id); }
   else if (action === "estado") {
     const e = fd.get("estado") as string;
     const rid = e === "en_refugio" ? ((fd.get("refugio_id") as string) || null) : null;
-    await supabase.from("personas").update({ estado: e, refugio_id: rid }).eq("id", id);
+    await supabaseAdmin.from("personas").update({ estado: e, refugio_id: rid }).eq("id", id);
   } else if (action === "refugio") {
     const rid = (fd.get("refugio_id") as string) || null;
-    await supabase.from("personas").update({ refugio_id: rid }).eq("id", id);
+    await supabaseAdmin.from("personas").update({ refugio_id: rid }).eq("id", id);
   }
   return Astro.redirect("/admin/personas" + buildQS(q, pagina));
 }
@@ -48,15 +49,15 @@ try {
       ? `cedula.eq.${q},nombres.ilike.*${q}*,apellidos.ilike.*${q}*`
       : `nombres.ilike.*${q}*,apellidos.ilike.*${q}*`;
     const [{ count }, { data }] = await Promise.all([
-      supabase.from("personas").select("id", { count: "exact", head: true }).or(filtro),
-      supabase.from("personas").select(selectCols).or(filtro).order("created_at", { ascending: false }).range(offset, offset + POR_PAGINA - 1),
+      supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).or(filtro),
+      supabaseAdmin.from("personas").select(selectCols).or(filtro).order("created_at", { ascending: false }).range(offset, offset + POR_PAGINA - 1),
     ]);
     totalPersonas = count || 0;
     if (data) personas = data;
   } else {
     const [{ count }, { data }] = await Promise.all([
-      supabase.from("personas").select("*", { count: "exact", head: true }),
-      supabase.from("personas")
+      supabaseAdmin.from("personas").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("personas")
         .select("id, nombres, apellidos, cedula, sin_cedula, telefono, sector, estado, refugio_id, acompanantes, nivel_afectacion, created_at")
         .order("created_at", { ascending: false })
         .range(offset, offset + POR_PAGINA - 1),

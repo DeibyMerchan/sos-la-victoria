@@ -1,6 +1,7 @@
 ---
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
-import { supabase } from "../../lib/supabaseClient";
+import { createSupabaseAdmin } from "../../lib/supabaseAdmin";
+const supabaseAdmin = createSupabaseAdmin();
 
 let personas = 0; let refugios = 0; let noticias = 0; let sosPend = 0;
 let enVivienda = 0; let evacuados = 0; let enRefugio = 0;
@@ -14,21 +15,21 @@ try {
     r8, r9, r10, r11, r12,
     r13, r14, r15,
   ] = await Promise.all([
-    supabase.from("personas").select("id", { count: "exact", head: true }),
-    supabase.from("refugios").select("id", { count: "exact", head: true }),
-    supabase.from("noticias").select("id", { count: "exact", head: true }),
-    supabase.from("solicitudes_sos").select("id", { count: "exact", head: true }).eq("atendido", false),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("estado", "en_vivienda"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("estado", "evacuado"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("estado", "en_refugio"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "perdida_total"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "perdida_parcial"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "danos_mayores"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "danos_menores"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "sin_afectacion"),
-    supabase.from("personas").select("acompanantes").eq("estado", "en_refugio"),
-    supabase.from("personas").select("acompanantes"),
-    supabase.from("personas").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 86400000).toISOString()),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("refugios").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("noticias").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("solicitudes_sos").select("id", { count: "exact", head: true }).eq("atendido", false),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("estado", "en_vivienda"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("estado", "evacuado"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("estado", "en_refugio"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "perdida_total"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "perdida_parcial"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "danos_mayores"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "danos_menores"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "sin_afectacion"),
+    supabaseAdmin.from("personas").select("acompanantes").eq("estado", "en_refugio"),
+    supabaseAdmin.from("personas").select("acompanantes"),
+    supabaseAdmin.from("personas").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 86400000).toISOString()),
   ]);
 
   if (r1.count != null) personas = r1.count;
