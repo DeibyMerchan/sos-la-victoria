@@ -1,11 +1,11 @@
 {
   "headers": [
     {
-      "source": "/admin/(.*)",
+      "source": "/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "https://sos-la-victoria.vercel.app" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, apikey" },
         { "key": "Access-Control-Allow-Credentials", "value": "true" }
       ]
     },

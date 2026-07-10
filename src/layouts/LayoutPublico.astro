@@ -69,8 +69,6 @@ const canonical = new URL(Astro.url.pathname, SITE).href;
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
   <slot />
-  <script>
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
-  </script>
+
 </body>
 </html>

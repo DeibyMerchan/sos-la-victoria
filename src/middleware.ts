@@ -13,7 +13,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       headers: {
         "Access-Control-Allow-Origin": url.origin,
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
         "Access-Control-Allow-Credentials": "true",
       },
     });
@@ -44,10 +44,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const response = await next();
 
-  if (url.pathname.startsWith("/admin")) {
-    response.headers.set("Access-Control-Allow-Origin", url.origin);
-    response.headers.set("Access-Control-Allow-Credentials", "true");
-  }
+  response.headers.set("Access-Control-Allow-Origin", url.origin);
+  response.headers.set("Access-Control-Allow-Credentials", "true");
 
   return response;
 });
