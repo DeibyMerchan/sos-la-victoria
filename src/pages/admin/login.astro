@@ -15,7 +15,7 @@ if (Astro.request.method === "POST") {
   const isProd = import.meta.env.PROD;
   Astro.cookies.set("sb-access-token", data.session.access_token, { path: "/", httpOnly: true, secure: isProd, sameSite: "lax", maxAge: 3600 });
   Astro.cookies.set("sb-refresh-token", data.session.refresh_token!, { path: "/", httpOnly: true, secure: isProd, sameSite: "lax", maxAge: 2592000 });
-  return Astro.redirect("/admin");
+  return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 ---
 
@@ -43,11 +43,18 @@ if (Astro.request.method === "POST") {
   document.getElementById("login-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target as HTMLFormElement);
-    const resp = await fetch(window.location.href, { method: "POST", body: fd });
-    if (resp.redirected) { window.location.href = resp.url; } else {
+    const errEl = document.getElementById("login-error")!;
+    errEl.classList.add("hidden");
+    try {
+      const resp = await fetch(window.location.href, { method: "POST", body: fd, redirect: "manual" });
       const data = await resp.json();
-      const errEl = document.getElementById("login-error");
-      if (errEl) { errEl.textContent = data.error || "Error"; errEl.classList.remove("hidden"); }
+      if (data.ok) { window.location.href = "/admin"; } else {
+        errEl.textContent = data.error || "Error al iniciar sesión";
+        errEl.classList.remove("hidden");
+      }
+    } catch (_) {
+      errEl.textContent = "Error de conexión. Intente de nuevo.";
+      errEl.classList.remove("hidden");
     }
   });
 </script>
