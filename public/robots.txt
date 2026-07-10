@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Sitemap: https://sos-la-victoria.vercel.app/sitemap-index.xml

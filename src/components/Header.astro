@@ -3,155 +3,94 @@ import { supabase } from "../lib/supabaseClient";
 
 let whatsapp = "";
 let telefono = "";
-let telefonoDisplay = "N/D";
-
 try {
-  const { data: config, error } = await supabase
-    .from("configuracion")
-    .select("whatsapp, telefono")
-    .eq("id", 1)
-    .maybeSingle();
-
-  if (!error && config) {
-    whatsapp = config.whatsapp || "";
-    telefono = config.telefono || "";
-    telefonoDisplay = telefono || whatsapp || "N/D";
-  }
-} catch (_e) {
-  // configuración no disponible, se usan valores por defecto
-}
+  const { data: c } = await supabase.from("configuracion").select("whatsapp, telefono").eq("id", 1).maybeSingle();
+  if (c) { whatsapp = c.whatsapp || ""; telefono = c.telefono || ""; }
+} catch (_) {}
 ---
 
 <header class="bg-red-700 text-white sticky top-0 z-50 shadow-lg">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    <button id="menu-toggle" class="text-2xl p-2" aria-label="Abrir menú">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-      </svg>
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <button id="menu-toggle" class="p-2" aria-label="Menú">
+      <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-
-    <a href="/" class="text-xl font-bold tracking-tight">
-      SOS LA VICTORIA
-    </a>
-
-    <a
-      id="sos-button"
-      href="#"
-      class="bg-white text-red-700 font-bold px-4 py-1.5 rounded-full text-sm flex items-center gap-1 shadow animate-pulse"
-      data-whatsapp={whatsapp}
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 1.637 6.016L0 24l6.152-1.604A11.958 11.958 0 0 0 11.944 24 12 12 0 0 0 24 12 12 12 0 0 0 11.944 0zm0 21.962a9.924 9.924 0 0 1-5.063-1.386l-.363-.216-3.65.952.974-3.556-.237-.378A9.926 9.926 0 0 1 2.038 12 9.906 9.906 0 0 1 11.944 2.1 9.906 9.906 0 0 1 21.85 12a9.906 9.906 0 0 1-9.906 9.962z"/>
-        <path d="M17.15 14.212c-.163-.082-.966-.476-1.115-.531-.15-.055-.26-.082-.368.082-.109.164-.423.531-.518.64-.096.108-.191.122-.354.04-.163-.081-.689-.254-1.313-.81a4.83 4.83 0 0 1-.908-1.128c-.095-.163-.01-.252.072-.333.074-.074.163-.19.245-.286.081-.095.108-.163.163-.272.054-.109.027-.204-.014-.286-.04-.081-.368-.887-.504-1.215-.133-.32-.268-.276-.368-.281-.095-.005-.204-.006-.313-.006-.11 0-.286.04-.436.204-.15.163-.572.559-.572 1.363 0 .804.586 1.581.668 1.69.081.109 1.154 1.762 2.796 2.471 1.642.71 1.642.473 1.938.444.296-.03.966-.395 1.102-.777.136-.381.136-.708.095-.777-.04-.068-.15-.109-.313-.19z"/>
-      </svg>
+    <a href="/" class="text-xl font-bold tracking-tight">SOS LA VICTORIA</a>
+    <button id="sos-header" class="bg-white text-red-700 font-bold px-4 py-1.5 rounded-full text-sm flex items-center gap-1 shadow hover:bg-red-50 transition animate-pulse" data-whatsapp={whatsapp}>
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 1.637 6.016L0 24l6.152-1.604A11.958 11.958 0 0 0 11.944 24 12 12 0 1 0 11.944 0zm0 21.962a9.924 9.924 0 0 1-5.063-1.386l-.363-.216-3.65.952.974-3.556-.237-.378A9.926 9.926 0 0 1 2.038 12 9.906 9.906 0 0 1 11.944 2.1 9.906 9.906 0 0 1 21.85 12a9.906 9.906 0 0 1-9.906 9.962z"/><path d="M17.15 14.212c-.163-.082-.966-.476-1.115-.531-.15-.055-.26-.082-.368.082-.109.164-.423.531-.518.64-.096.108-.191.122-.354.04-.163-.081-.689-.254-1.313-.81a4.83 4.83 0 0 1-.908-1.128c-.095-.163-.01-.252.072-.333.074-.074.163-.19.245-.286.081-.095.108-.163.163-.272.054-.109.027-.204-.014-.286-.04-.081-.368-.887-.504-1.215-.133-.32-.268-.276-.368-.281-.095-.005-.204-.006-.313-.006-.11 0-.286.04-.436.204-.15.163-.572.559-.572 1.363 0 .804.586 1.581.668 1.69.081.109 1.154 1.762 2.796 2.471 1.642.71 1.642.473 1.938.444.296-.03.966-.395 1.102-.777.136-.381.136-.708.095-.777-.04-.068-.15-.109-.313-.19z"/></svg>
       SOS
-    </a>
+    </button>
   </div>
 </header>
 
 <!-- Menú lateral -->
-<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" aria-hidden="true"></div>
-<nav id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto flex flex-col">
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
+<nav id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 -translate-x-full transition-transform duration-300 flex flex-col overflow-y-auto">
   <div class="bg-red-700 text-white px-5 py-4 flex items-center justify-between">
     <span class="text-lg font-bold">SOS La Victoria</span>
-    <button id="menu-close" class="text-2xl" aria-label="Cerrar menú">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
+    <button id="menu-close" class="text-2xl">&times;</button>
   </div>
-  <ul class="py-2 pb-20">
-    <li><a href="/" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-      </svg>
+  <ul class="py-2 flex-1">
+    <li><a href="/" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       Inicio
     </a></li>
-    <li><a href="/registrar" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-      </svg>
+    <li><a href="/registrar" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
       Registrar Persona
     </a></li>
-    <li><a href="/consultar" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
+    <li><a href="/consultar" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
       Consultar Persona
     </a></li>
-    <li><a href="/refugios" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-      </svg>
+    <li><a href="/refugios" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
       Refugios
     </a></li>
-    <li><a href="/noticias" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-      </svg>
+    <li><a href="/noticias" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
       Noticias
     </a></li>
-    <li><a href="/emergencias" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-      </svg>
+    <li><a href="/emergencias" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
       Emergencias
     </a></li>
-    <li><a href="/acerca-de" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
+    <li><a href="/acerca-de" class="flex items-center gap-3 px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-700">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Acerca de
     </a></li>
     <li class="border-t border-gray-100 mt-2 pt-2">
       <a href="/admin" class="flex items-center gap-3 px-5 py-3 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors text-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-        </svg>
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         Ingresar como admin
       </a>
     </li>
   </ul>
-  <div class="p-4 border-t text-center text-sm text-gray-400 mt-auto">
-    {telefono ? (
-      <a href={`tel:${telefono}`} class="text-red-600 font-medium">
-        Tel: {telefonoDisplay}
-      </a>
-    ) : null}
+  <div class="p-4 border-t text-center text-sm text-gray-400">
+    {telefono ? <a href={`tel:${telefono}`} class="text-red-600 font-medium">{telefono || whatsapp || "N/D"}</a> : (whatsapp ? <span class="text-gray-500">{whatsapp}</span> : null)}
   </div>
 </nav>
 
 <!-- SOS Modal -->
-<div id="sos-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-end sm:items-center justify-center">
+<div id="sos-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center">
   <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-6 shadow-2xl animate-slide-up">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-bold text-red-700">Emergencia SOS</h2>
-      <button id="sos-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl" aria-label="Cerrar">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
+      <button id="sos-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
     </div>
-    <p class="text-gray-600 mb-5 text-sm">Selecciona cómo quieres contactar asistencia de emergencia:</p>
+    <p class="text-gray-600 mb-5 text-sm">Selecciona cómo contactar asistencia:</p>
     <div class="space-y-3">
-      <a id="sos-call" href="tel:{telefono}" class="flex items-center gap-3 bg-green-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-green-600 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-        </svg>
+      <a href={`tel:${telefono}`} class="flex items-center gap-3 bg-green-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-green-600">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
         Llamar
       </a>
-      <a id="sos-whatsapp" href={whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Emergencia%20SOS%20La%20Victoria%20-%20Necesito%20ayuda` : '#'} target="_blank" class="flex items-center gap-3 bg-emerald-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-emerald-600 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 1.637 6.016L0 24l6.152-1.604A11.958 11.958 0 0 0 11.944 24 12 12 0 0 0 24 12 12 12 0 0 0 11.944 0zm0 21.962a9.924 9.924 0 0 1-5.063-1.386l-.363-.216-3.65.952.974-3.556-.237-.378A9.926 9.926 0 0 1 2.038 12 9.906 9.906 0 0 1 11.944 2.1 9.906 9.906 0 0 1 21.85 12a9.906 9.906 0 0 1-9.906 9.962z"/>
-          <path d="M17.15 14.212c-.163-.082-.966-.476-1.115-.531-.15-.055-.26-.082-.368.082-.109.164-.423.531-.518.64-.096.108-.191.122-.354.04-.163-.081-.689-.254-1.313-.81a4.83 4.83 0 0 1-.908-1.128c-.095-.163-.01-.252.072-.333.074-.074.163-.19.245-.286.081-.095.108-.163.163-.272.054-.109.027-.204-.014-.286-.04-.081-.368-.887-.504-1.215-.133-.32-.268-.276-.368-.281-.095-.005-.204-.006-.313-.006-.11 0-.286.04-.436.204-.15.163-.572.559-.572 1.363 0 .804.586 1.581.668 1.69.081.109 1.154 1.762 2.796 2.471 1.642.71 1.642.473 1.938.444.296-.03.966-.395 1.102-.777.136-.381.136-.708.095-.777-.04-.068-.15-.109-.313-.19z"/>
-        </svg>
-        WhatsApp
-      </a>
-      <button id="sos-location" class="w-full flex items-center gap-3 bg-blue-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-blue-600 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
+      {whatsapp ? (
+        <a href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Emergencia%20SOS%20La%20Victoria%20-%20Necesito%20ayuda`} target="_blank" class="flex items-center gap-3 bg-emerald-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-emerald-600">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 1.637 6.016L0 24l6.152-1.604A11.96 11.96 0 0 0 11.944 24 12 12 0 1 0 11.944 0zm0 21.962a9.92 9.92 0 0 1-5.063-1.386l-.363-.216-3.65.952.974-3.556-.237-.378A9.926 9.926 0 0 1 2.038 12 9.906 9.906 0 0 1 11.944 2.1 9.906 9.906 0 0 1 21.85 12a9.906 9.906 0 0 1-9.906 9.962z"/><path d="M17.15 14.212c-.163-.082-.966-.476-1.115-.531-.15-.055-.26-.082-.368.082-.109.164-.423.531-.518.64-.096.108-.191.122-.354.04-.163-.081-.689-.254-1.313-.81a4.83 4.83 0 0 1-.908-1.128c-.095-.163-.01-.252.072-.333.074-.074.163-.19.245-.286.081-.095.108-.163.163-.272.054-.109.027-.204-.014-.286-.04-.081-.368-.887-.504-1.215-.133-.32-.268-.276-.368-.281-.095-.005-.204-.006-.313-.006-.11 0-.286.04-.436.204-.15.163-.572.559-.572 1.363 0 .804.586 1.581.668 1.69.081.109 1.154 1.762 2.796 2.471 1.642.71 1.642.473 1.938.444.296-.03.966-.395 1.102-.777.136-.381.136-.708.095-.777-.04-.068-.15-.109-.313-.19z"/></svg>
+          WhatsApp
+        </a>
+      ) : null}
+      <button id="sos-location" class="w-full flex items-center gap-3 bg-blue-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-blue-600">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         Compartir ubicación
       </button>
     </div>
@@ -159,100 +98,39 @@ try {
 </div>
 
 <script>
-  // Menú lateral
   const menuToggle = document.getElementById('menu-toggle');
   const menuClose = document.getElementById('menu-close');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-
-  function openMenu() {
-    sidebar?.classList.remove('-translate-x-full');
-    overlay?.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeMenu() {
-    sidebar?.classList.add('-translate-x-full');
-    overlay?.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
+  function openMenu() { sidebar?.classList.remove('-translate-x-full'); overlay?.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeMenu() { sidebar?.classList.add('-translate-x-full'); overlay?.classList.add('hidden'); document.body.style.overflow = ''; }
   menuToggle?.addEventListener('click', openMenu);
   menuClose?.addEventListener('click', closeMenu);
   overlay?.addEventListener('click', closeMenu);
 
-  // SOS Modal
-  const sosButton = document.getElementById('sos-button');
   const sosModal = document.getElementById('sos-modal');
-  const sosModalClose = document.getElementById('sos-modal-close');
+  const sosClose = document.getElementById('sos-modal-close');
   const sosLocation = document.getElementById('sos-location');
-
-  sosButton?.addEventListener('click', (e) => {
-    e.preventDefault();
-    sosModal?.classList.remove('hidden');
-    // Registrar solicitud SOS
-    fetch('/api/sos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ canal: 'whatsapp' })
-    }).catch(() => {});
-  });
-
-  sosModalClose?.addEventListener('click', () => sosModal?.classList.add('hidden'));
-  sosModal?.addEventListener('click', (e) => {
-    if (e.target === sosModal) sosModal.classList.add('hidden');
-  });
-
-  // Compartir ubicación
+  document.getElementById('sos-header')?.addEventListener('click', () => { sosModal?.classList.remove('hidden'); fetch('/api/sos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ canal: 'whatsapp' }) }).catch(() => {}); });
+  sosClose?.addEventListener('click', () => sosModal?.classList.add('hidden'));
+  sosModal?.addEventListener('click', (e) => { if (e.target === sosModal) sosModal.classList.add('hidden'); });
   sosLocation?.addEventListener('click', () => {
     if (navigator.geolocation) {
       sosLocation.textContent = 'Obteniendo ubicación...';
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const url = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
-          const msg = `Emergencia SOS - Mi ubicación: ${url}`;
-          const wa = sosButton?.dataset.whatsapp || '';
-          if (wa) {
-            window.open(`https://wa.me/${wa.replace(/\\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-          }
-          fetch('/api/sos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ canal: 'ubicacion', ubicacion: url })
-          }).catch(() => {});
-          sosLocation.textContent = 'Compartir ubicación';
-          sosModal?.classList.add('hidden');
-        },
-        () => {
-          alert('No se pudo obtener la ubicación. Verifica los permisos del navegador.');
-          sosLocation.textContent = 'Compartir ubicación';
-        }
-      );
-    } else {
-      alert('Tu navegador no soporta geolocalización.');
-    }
-  });
-
-  // Cerrar SOS al abrir WhatsApp
-  document.getElementById('sos-whatsapp')?.addEventListener('click', () => {
-    sosModal?.classList.add('hidden');
-  });
-  document.getElementById('sos-call')?.addEventListener('click', () => {
-    sosModal?.classList.add('hidden');
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const url = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+        const wa = document.getElementById('sos-header')?.dataset.whatsapp || '';
+        if (wa) window.open(`https://wa.me/${wa.replace(/\\D/g, '')}?text=${encodeURIComponent('Emergencia SOS - Mi ubicación: ' + url)}`, '_blank');
+        fetch('/api/sos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ canal: 'ubicacion', ubicacion: url }) }).catch(() => {});
+        sosLocation.textContent = 'Compartir ubicación';
+        sosModal?.classList.add('hidden');
+      }, () => { alert('No se pudo obtener la ubicación.'); sosLocation.textContent = 'Compartir ubicación'; });
+    } else { alert('Geolocalización no soportada.'); }
   });
 </script>
 
 <style>
-  @keyframes slide-up {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-  @media (min-width: 640px) {
-    @keyframes slide-up {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-  }
-  .animate-slide-up {
-    animation: slide-up 0.3s ease-out;
-  }
+  .animate-slide-up { animation: slide-up 0.3s ease-out; }
+  @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (min-width: 640px) { @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } } }
 </style>

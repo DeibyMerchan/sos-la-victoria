@@ -3,393 +3,231 @@ import LayoutPublico from "../layouts/LayoutPublico.astro";
 import Header from "../components/Header.astro";
 import { supabase } from "../lib/supabaseClient";
 
-const { data: refugios } = await supabase
-  .from("refugios")
-  .select("id, nombre")
-  .eq("activo", true)
-  .order("nombre");
+let refugios: any[] = [];
+try {
+  const { data } = await supabase.from("refugios").select("id, nombre").eq("activo", true).order("nombre");
+  if (data) refugios = data;
+} catch (_) {}
 ---
 
-<LayoutPublico>
+<LayoutPublico
+  title="Registrar Persona | SOS La Victoria"
+  description="Registre personas afectadas por el desbordamiento del río Arauca. Complete los datos de la persona damnificada: cédula, nombres, ubicación y situación actual."
+>
   <Header />
   <main class="max-w-lg mx-auto px-4 py-6 pb-10">
-    <a href="/" class="text-red-600 text-sm font-medium inline-flex items-center gap-1 mb-4">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-      </svg>
-      Volver
-    </a>
 
-    <h1 class="text-2xl font-bold text-red-700 mb-1">Registrar Persona</h1>
-    <p class="text-sm text-gray-500 mb-6">Complete los datos de la persona afectada</p>
+    <!-- Pantalla de registro -->
+    <div id="pantalla-registro">
+      <a href="/" class="text-red-600 text-sm font-medium inline-flex items-center gap-1 mb-4 hover:underline">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Volver
+      </a>
+      <h1 class="text-2xl font-bold text-red-700 mb-1">Registrar Persona</h1>
+      <p class="text-sm text-gray-500 mb-6">Complete los datos de la persona afectada</p>
 
-    <form id="form-registro" class="space-y-4 bg-white rounded-2xl shadow-md p-5" autocomplete="off">
-      <!-- Cédula -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Cédula de identidad *</label>
-        <input
-          type="text"
-          id="cedula"
-          name="cedula"
-          inputmode="numeric"
-          maxlength="10"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-          placeholder="Ej: 18456321"
-        />
-        <div class="flex items-center gap-2 mt-2">
-          <input type="checkbox" id="sin-cedula" class="rounded border-gray-300 text-red-600 focus:ring-red-500" />
-          <label for="sin-cedula" class="text-xs text-gray-500">No tiene cédula a mano</label>
-        </div>
-        <p id="cedula-aviso" class="text-xs text-orange-600 mt-1 hidden"></p>
-      </div>
-
-      <!-- Nombres -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombres *</label>
-        <input
-          type="text"
-          id="nombres"
-          name="nombres"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-          placeholder="Nombres completos"
-        />
-      </div>
-
-      <!-- Apellidos -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
-        <input
-          type="text"
-          id="apellidos"
-          name="apellidos"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-          placeholder="Apellidos completos"
-        />
-      </div>
-
-      <!-- Teléfono -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-        <input
-          type="tel"
-          id="telefono"
-          name="telefono"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-          placeholder="Ej: 0412-1234567"
-        />
-      </div>
-
-      <!-- Sector y Dirección -->
-      <div class="grid grid-cols-2 gap-3">
+      <form id="form-registro" class="space-y-4 bg-white rounded-2xl shadow-md p-5" autocomplete="off">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Sector</label>
-          <input
-            type="text"
-            id="sector"
-            name="sector"
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-            placeholder="Sector"
-          />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cédula de identidad *</label>
+          <input type="text" id="cedula" name="cedula" inputmode="numeric" maxlength="10" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="Ej: 18456321" />
+          <div class="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="sin-cedula" name="sin_cedula" class="rounded border-gray-300 text-red-600 focus:ring-red-500" />
+            <label for="sin-cedula" class="text-xs text-gray-500">No tiene cédula a mano</label>
+          </div>
+          <p id="cedula-aviso" class="text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mt-2 hidden font-medium"></p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-          <input
-            type="text"
-            id="direccion"
-            name="direccion"
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-            placeholder="Dirección"
-          />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombres *</label>
+          <input type="text" id="nombres" name="nombres" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="Nombres completos" />
         </div>
-      </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
+          <input type="text" id="apellidos" name="apellidos" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="Apellidos completos" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+          <input type="tel" id="telefono" name="telefono" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="Ej: 0412-1234567" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Sector</label><input type="text" id="sector" name="sector" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="Sector" /></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label><input type="text" id="direccion" name="direccion" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" placeholder="Dirección" /></div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Número de acompañantes</label>
+          <input type="number" id="acompanantes" name="acompanantes" min="0" max="99" value="0" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nivel de afectación</label>
+          <select id="nivel_afectacion" name="nivel_afectacion" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white">
+            <option value="">Seleccionar...</option>
+            <option value="perdida_total">Pérdida total</option>
+            <option value="perdida_parcial">Pérdida parcial</option>
+            <option value="danos_mayores">Daños mayores</option>
+            <option value="danos_menores">Daños menores</option>
+            <option value="sin_afectacion">Sin afectación</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Situación actual *</label>
+          <select id="estado" name="estado" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white">
+            <option value="en_vivienda">En su vivienda</option>
+            <option value="evacuado">Evacuado (sin refugio asignado)</option>
+            <option value="en_refugio">En refugio</option>
+          </select>
+        </div>
+        <div id="refugio-group" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Refugio</label>
+          <select id="refugio_id" name="refugio_id" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white">
+            <option value="">Seleccionar refugio</option>
+            {refugios.map(r => <option value={r.id}>{r.nombre}</option>)}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+          <textarea id="observaciones" name="observaciones" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none" placeholder="Información adicional relevante"></textarea>
+        </div>
+        <button type="submit" id="btn-enviar" class="w-full bg-red-700 text-white font-bold py-3.5 rounded-xl hover:bg-red-800 transition shadow-md disabled:opacity-50">Registrar persona</button>
+        <div id="msg-error" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 text-sm"></div>
+      </form>
+    </div>
 
-      <!-- Acompañantes -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Número de acompañantes</label>
-        <input
-          type="number"
-          id="acompanantes"
-          name="acompanantes"
-          min="0"
-          max="99"
-          value="0"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
-        />
+    <!-- Pantalla de éxito -->
+    <div id="pantalla-exito" class="hidden">
+      <div class="bg-white rounded-2xl shadow-lg p-8 text-center max-w-sm mx-auto">
+        <div class="bg-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">¡Registro exitoso!</h2>
+        <p class="text-gray-500 mb-6">La persona ha sido registrada correctamente.</p>
+        <button id="btn-continuar" class="w-full bg-red-700 text-white font-bold py-3.5 rounded-xl hover:bg-red-800 transition shadow-md">
+          Registrar otra persona
+        </button>
+        <a href="/" class="block mt-3 text-gray-400 text-sm hover:text-gray-600">Volver al inicio</a>
       </div>
+    </div>
 
-      <!-- Estado -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Situación actual *</label>
-        <select
-          id="estado"
-          name="estado"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition bg-white"
-        >
-          <option value="en_vivienda">En su vivienda</option>
-          <option value="evacuado">Evacuado (sin refugio asignado)</option>
-          <option value="en_refugio">En refugio</option>
-        </select>
-      </div>
-
-      <!-- Refugio (condicional) -->
-      <div id="refugio-group" class="hidden">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Refugio</label>
-        <select
-          id="refugio_id"
-          name="refugio_id"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition bg-white"
-        >
-          <option value="">Seleccionar refugio</option>
-          {refugios?.map((r) => (
-            <option value={r.id}>{r.nombre}</option>
-          ))}
-        </select>
-      </div>
-
-      <!-- Observaciones -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
-        <textarea
-          id="observaciones"
-          name="observaciones"
-          rows="2"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition resize-none"
-          placeholder="Información adicional relevante"
-        ></textarea>
-      </div>
-
-      <!-- Botón -->
-      <button
-        type="submit"
-        id="btn-enviar"
-        class="w-full bg-red-700 text-white font-bold py-3.5 rounded-xl hover:bg-red-800 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Registrar persona
-      </button>
-
-      <!-- Mensajes -->
-      <div id="msg-exito" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 text-sm">
-        Persona registrada correctamente
-      </div>
-      <div id="msg-error" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 text-sm"></div>
-    </form>
   </main>
 </LayoutPublico>
 
 <script>
   import { supabase } from "../lib/supabaseClient";
 
-  interface RegistroPayload {
-    cedula: string;
-    sin_cedula: boolean;
-    nombres: string;
-    apellidos: string;
-    telefono: string;
-    sector: string;
-    direccion: string;
-    acompanantes: number;
-    estado: string;
-    refugio_id: string | null;
-    observaciones: string;
-  }
+  const COLA_KEY = "reg_pendientes";
+  function getCola() { try { return JSON.parse(localStorage.getItem(COLA_KEY) || "[]"); } catch (_) { return []; } }
+  function setCola(c: any[]) { localStorage.setItem(COLA_KEY, JSON.stringify(c)); }
 
-  const COLA_KEY = "registros_pendientes";
-
-  function getCola(): RegistroPayload[] {
-    try {
-      return JSON.parse(localStorage.getItem(COLA_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  }
-
-  function setCola(cola: RegistroPayload[]) {
-    localStorage.setItem(COLA_KEY, JSON.stringify(cola));
-  }
-
-  function limpiarForm() {
-    const form = document.getElementById("form-registro") as HTMLFormElement | null;
-    form?.reset();
-    document.getElementById("cedula-aviso")?.classList.add("hidden");
-    const refEl = document.getElementById("refugio-group");
-    if (refEl) refEl.classList.add("hidden");
-    const sinCedula = document.getElementById("sin-cedula") as HTMLInputElement | null;
-    if (sinCedula) sinCedula.checked = false;
+  function mostrarError(m: string) {
+    const el = document.getElementById("msg-error");
+    if (el) { el.textContent = m; el.classList.remove("hidden"); setTimeout(() => el.classList.add("hidden"), 8000); }
   }
 
   function mostrarExito() {
-    const el = document.getElementById("msg-exito");
-    if (el) { el.classList.remove("hidden"); setTimeout(() => el.classList.add("hidden"), 5000); }
+    document.getElementById("pantalla-registro")?.classList.add("hidden");
+    document.getElementById("pantalla-exito")?.classList.remove("hidden");
   }
 
-  function mostrarError(msg: string) {
-    const el = document.getElementById("msg-error");
-    if (el) { el.classList.remove("hidden"); el.textContent = msg; setTimeout(() => el.classList.add("hidden"), 8000); }
+  function limpiarYVolver() {
+    const form = document.getElementById("form-registro") as HTMLFormElement;
+    if (form) form.reset();
+    document.getElementById("cedula-aviso")?.classList.add("hidden");
+    document.getElementById("refugio-group")?.classList.add("hidden");
+    document.getElementById("pantalla-exito")?.classList.add("hidden");
+    document.getElementById("pantalla-registro")?.classList.remove("hidden");
+    window.scrollTo(0, 0);
   }
 
-  async function verificarCedula(cedula: string) {
-    const aviso = document.getElementById("cedula-aviso");
-    const btnEnviar = document.getElementById("btn-enviar") as HTMLButtonElement | null;
-    if (!cedula || cedula.length < 4) {
-      if (aviso) aviso.classList.add("hidden");
-      if (btnEnviar) btnEnviar.disabled = false;
-      return;
-    }
+  document.getElementById("btn-continuar")?.addEventListener("click", limpiarYVolver);
 
-    const { data, error } = await supabase.rpc("existe_cedula", { c: cedula });
+  document.getElementById("estado")?.addEventListener("change", function() {
+    const sel = this as HTMLSelectElement;
+    document.getElementById("refugio-group")?.classList.toggle("hidden", sel.value !== "en_refugio");
+  });
 
-    if (error) return;
+  const cedulaInput = document.getElementById("cedula") as HTMLInputElement;
+  cedulaInput?.addEventListener("input", () => {
+    cedulaInput.value = cedulaInput.value.replace(/\D/g, "");
+  });
 
-    if (data && data.length > 0) {
-      const p = data[0] as { nombres: string; apellidos: string; estado: string; created_at: string };
-      if (aviso) {
-        aviso.textContent = `Esta persona ya fue registrada: ${p.nombres} ${p.apellidos} — ${p.estado} (${new Date(p.created_at).toLocaleDateString()})`;
-        aviso.classList.remove("hidden");
+  cedulaInput?.addEventListener("blur", async () => {
+    const c = cedulaInput.value.trim();
+    if (!c || c.length < 4) return;
+    try {
+      const { data } = await supabase.rpc("existe_cedula", { c });
+      const aviso = document.getElementById("cedula-aviso");
+      const btn = document.getElementById("btn-enviar") as HTMLButtonElement;
+      if (data?.length) {
+        const p = data[0];
+        if (aviso) { aviso.innerHTML = `<strong>⚠️ Esta persona ya fue registrada:</strong><br>${p.nombres} ${p.apellidos} — Estado: ${p.estado} — Fecha: ${new Date(p.created_at).toLocaleDateString("es-VE")}`; aviso.classList.remove("hidden"); }
+        if (btn) btn.disabled = true;
+      } else {
+        if (aviso) aviso.classList.add("hidden");
+        if (btn) btn.disabled = false;
       }
-      if (btnEnviar) btnEnviar.disabled = true;
-    } else {
-      if (aviso) aviso.classList.add("hidden");
-      if (btnEnviar) btnEnviar.disabled = false;
-    }
-  }
-
-  // Mostrar/ocultar refugio según estado
-  const estadoSelect = document.getElementById("estado") as HTMLSelectElement | null;
-  const refugioGroup = document.getElementById("refugio-group");
-  estadoSelect?.addEventListener("change", () => {
-    if (refugioGroup && estadoSelect) {
-      refugioGroup.classList.toggle("hidden", estadoSelect.value !== "en_refugio");
-    }
+    } catch (_) {}
   });
 
-  // Verificar cédula al perder foco
-  const cedulaInput = document.getElementById("cedula") as HTMLInputElement | null;
-  cedulaInput?.addEventListener("blur", () => {
-    const sinCedulaEl = document.getElementById("sin-cedula") as HTMLInputElement | null;
-    const sinCedula = sinCedulaEl ? sinCedulaEl.checked : false;
-    if (!sinCedula && cedulaInput) {
-      verificarCedula(cedulaInput.value.trim());
-    }
+  document.getElementById("sin-cedula")?.addEventListener("change", function() {
+    const cb = this as HTMLInputElement;
+    cedulaInput.disabled = cb.checked;
+    if (cb.checked) { cedulaInput.value = ""; document.getElementById("cedula-aviso")?.classList.add("hidden"); (document.getElementById("btn-enviar") as HTMLButtonElement).disabled = false; }
   });
 
-  // Toggle sin cédula
-  document.getElementById("sin-cedula")?.addEventListener("change", function (this: HTMLInputElement) {
-    const checked = this.checked;
-    if (cedulaInput) cedulaInput.disabled = checked;
-    if (checked) {
-      if (cedulaInput) cedulaInput.value = "";
-      document.getElementById("cedula-aviso")?.classList.add("hidden");
-      const btn = document.getElementById("btn-enviar") as HTMLButtonElement | null;
-      if (btn) btn.disabled = false;
-    }
-  });
-
-  // Enviar formulario
   document.getElementById("form-registro")?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const fd = new FormData(e.target as HTMLFormElement);
+    const sinCedula = (document.getElementById("sin-cedula") as HTMLInputElement).checked;
+    let cedula = (fd.get("cedula") as string).trim().replace(/\D/g, "");
+    if (sinCedula) cedula = "SINCED-" + Date.now();
+    if (!cedula) return mostrarError("La cédula es obligatoria.");
+    if (!sinCedula && !/^\d{5,10}$/.test(cedula)) return mostrarError("Cédula inválida (5-10 dígitos).");
 
-    const form = e.target as HTMLFormElement;
-    const fd = new FormData(form);
-    const sinCedulaEl = document.getElementById("sin-cedula") as HTMLInputElement | null;
-    const sinCedula = sinCedulaEl ? sinCedulaEl.checked : false;
-
-    let cedula = (fd.get("cedula") as string || "").trim();
-    if (sinCedula) {
-      cedula = "SINCED-" + Date.now();
+    if (!sinCedula) {
+      try {
+        const { data: existe } = await supabase.rpc("existe_cedula", { c: cedula });
+        if (existe?.length) {
+          const p = existe[0];
+          return mostrarError(`Esta persona ya fue registrada: ${p.nombres} ${p.apellidos} — ${p.estado}`);
+        }
+      } catch (_) {}
     }
 
-    if (!cedula) {
-      mostrarError("La cédula es obligatoria.");
-      return;
-    }
-    if (!sinCedula && !/^\d{5,10}$/.test(cedula.replace(/[^0-9]/g, ""))) {
-      mostrarError("La cédula debe tener entre 5 y 10 dígitos numéricos.");
-      return;
-    }
+    const nombres = (fd.get("nombres") as string).trim();
+    const apellidos = (fd.get("apellidos") as string).trim();
+    if (!nombres || !apellidos) return mostrarError("Nombre y apellido obligatorios.");
 
-    const nombres = (fd.get("nombres") as string || "").trim();
-    const apellidos = (fd.get("apellidos") as string || "").trim();
-    if (!nombres) { mostrarError("El nombre es obligatorio."); return; }
-    if (!apellidos) { mostrarError("El apellido es obligatorio."); return; }
-
-    const payload: RegistroPayload = {
-      cedula,
-      sin_cedula: sinCedula,
-      nombres,
-      apellidos,
-      telefono: (fd.get("telefono") as string || "").trim(),
-      sector: (fd.get("sector") as string || "").trim(),
-      direccion: (fd.get("direccion") as string || "").trim(),
+    const payload = {
+      cedula, sin_cedula: sinCedula, nombres, apellidos,
+      telefono: (fd.get("telefono") as string).trim() || null,
+      sector: (fd.get("sector") as string).trim() || null,
+      direccion: (fd.get("direccion") as string).trim() || null,
       acompanantes: parseInt(fd.get("acompanantes") as string) || 0,
-      estado: (fd.get("estado") as string) || "",
+      nivel_afectacion: (fd.get("nivel_afectacion") as string) || null,
+      estado: fd.get("estado") as string,
       refugio_id: (fd.get("refugio_id") as string) || null,
-      observaciones: (fd.get("observaciones") as string || "").trim(),
+      observaciones: (fd.get("observaciones") as string).trim() || null,
     };
 
-    const { error } = await supabase.from("personas").insert({
-      cedula: payload.cedula,
-      sin_cedula: payload.sin_cedula,
-      nombres: payload.nombres,
-      apellidos: payload.apellidos,
-      telefono: payload.telefono || null,
-      sector: payload.sector || null,
-      direccion: payload.direccion || null,
-      acompanantes: payload.acompanantes,
-      estado: payload.estado,
-      refugio_id: payload.refugio_id || null,
-      observaciones: payload.observaciones || null,
-    });
-
+    const { error } = await supabase.from("personas").insert(payload);
     if (error) {
       if (!navigator.onLine) {
-        const cola = getCola();
-        cola.push(payload);
-        setCola(cola);
-        mostrarError("Sin conexión. El registro se guardó y se enviará automáticamente al reconectar.");
-        limpiarForm();
+        const cola = getCola(); cola.push(payload); setCola(cola);
+        mostrarError("Sin conexión. Se enviará al reconectar.");
       } else {
         mostrarError("Error: " + error.message);
       }
     } else {
       mostrarExito();
-      limpiarForm();
     }
   });
 
-  // Sincronizar cola pendiente al reconectar
-  function sincronizarCola() {
+  function sincronizar() {
     const cola = getCola();
-    if (cola.length === 0) return;
-
-    const pendientes = [...cola];
-    setCola([]);
-
-    Promise.all(
-      pendientes.map((p) =>
-        supabase.from("personas").insert({
-          cedula: p.cedula,
-          sin_cedula: p.sin_cedula,
-          nombres: p.nombres,
-          apellidos: p.apellidos,
-          telefono: p.telefono || null,
-          sector: p.sector || null,
-          direccion: p.direccion || null,
-          acompanantes: p.acompanantes,
-          estado: p.estado,
-          refugio_id: p.refugio_id || null,
-          observaciones: p.observaciones || null,
-        })
-      )
-    ).then((results) => {
-      const fallidas = results.filter((r) => r.error);
-      if (fallidas.length > 0) {
-        const colaActual = getCola();
-        colaActual.push(...pendientes);
-        setCola(colaActual);
-      }
+    if (!cola.length) return;
+    const pendientes = [...cola]; setCola([]);
+    Promise.all(pendientes.map((p: any) => supabase.from("personas").insert(p))).then(results => {
+      const fallidas = results.filter((r: any) => r.error);
+      if (fallidas.length) { const c = getCola(); c.push(...pendientes); setCola(c); }
     });
   }
-
-  window.addEventListener("online", sincronizarCola);
-  sincronizarCola();
+  window.addEventListener("online", sincronizar);
+  sincronizar();
 </script>

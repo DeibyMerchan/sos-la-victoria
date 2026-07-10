@@ -403,6 +403,13 @@ Reglas:
 
 ---
 
+**Refugio**
+7.030327, -71.435489
+La Victoria, Apure, Venezuela
+Casa de la Cultura
+**Proteccion civil la victoria**
+La Victoria, Apure, Venezuela
+7.030880, -71.436042
 ### Fase 4 — Pantalla principal (`index.astro`)
 
 Construir en este orden exacto (de arriba hacia abajo):

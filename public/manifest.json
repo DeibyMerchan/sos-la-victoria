@@ -1,23 +1,16 @@
 {
-  "name": "SOS La Victoria",
+  "name": "SOS La Victoria — Ayuda Humanitaria",
   "short_name": "SOS Victoria",
-  "description": "Registro y consulta de personas afectadas por el desbordamiento del río Arauca en La Victoria, Apure, Venezuela",
+  "description": "Registro y consulta de personas afectadas por el desbordamiento del río Arauca en La Victoria, Apure, Venezuela.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#b91c1c",
   "lang": "es-VE",
-  "orientation": "portrait-primary",
+  "categories": ["emergency", "utilities", "government"],
   "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "/icons/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

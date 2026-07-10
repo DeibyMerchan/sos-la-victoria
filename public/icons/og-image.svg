@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#b91c1c" rx="0"/>
+  <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#ffffff" stroke-width="3" rx="24" opacity="0.3"/>
+  <text x="200" y="280" font-family="system-ui, sans-serif" font-size="64" font-weight="800" fill="#ffffff">SOS LA VICTORIA</text>
+  <text x="200" y="340" font-family="system-ui, sans-serif" font-size="28" fill="#fca5a5">Ayuda humanitaria para los afectados</text>
+  <text x="200" y="380" font-family="system-ui, sans-serif" font-size="28" fill="#fca5a5">por el desbordamiento del río Arauca</text>
+  <text x="200" y="460" font-family="system-ui, sans-serif" font-size="18" fill="#ef4444">Parroquia Urdaneta · Municipio Páez · Estado Apure · Venezuela</text>
+  <circle cx="1000" cy="200" r="90" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.5"/>
+  <path d="M970 180 L1000 210 L1030 170" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+</svg>

@@ -2,97 +2,146 @@
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
 import { supabase } from "../../lib/supabaseClient";
 
-const { count: totalPersonas } = await supabase
-  .from("personas")
-  .select("id", { count: "exact", head: true });
+let personas = 0; let refugios = 0; let noticias = 0; let sosPend = 0;
+let enVivienda = 0; let evacuados = 0; let enRefugio = 0;
+let perdidaTotal = 0; let perdidaParcial = 0; let danosMayores = 0; let danosMenores = 0; let sinAfectacion = 0;
+let totalAcompanantes = 0; let totalEnRefugios = 0; let acompEnRefugios = 0; let recientes24h = 0;
 
-const { count: totalRefugios } = await supabase
-  .from("refugios")
-  .select("id", { count: "exact", head: true });
+try {
+  const [
+    r1, r2, r3, r4,
+    r5, r6, r7,
+    r8, r9, r10, r11, r12,
+    r13, r14, r15,
+  ] = await Promise.all([
+    supabase.from("personas").select("id", { count: "exact", head: true }),
+    supabase.from("refugios").select("id", { count: "exact", head: true }),
+    supabase.from("noticias").select("id", { count: "exact", head: true }),
+    supabase.from("solicitudes_sos").select("id", { count: "exact", head: true }).eq("atendido", false),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("estado", "en_vivienda"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("estado", "evacuado"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("estado", "en_refugio"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "perdida_total"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "perdida_parcial"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "danos_mayores"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "danos_menores"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("nivel_afectacion", "sin_afectacion"),
+    supabase.from("personas").select("acompanantes").eq("estado", "en_refugio"),
+    supabase.from("personas").select("acompanantes"),
+    supabase.from("personas").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 86400000).toISOString()),
+  ]);
 
-const { count: totalNoticias } = await supabase
-  .from("noticias")
-  .select("id", { count: "exact", head: true });
+  if (r1.count != null) personas = r1.count;
+  if (r2.count != null) refugios = r2.count;
+  if (r3.count != null) noticias = r3.count;
+  if (r4.count != null) sosPend = r4.count;
+  if (r5.count != null) enVivienda = r5.count;
+  if (r6.count != null) evacuados = r6.count;
+  if (r7.count != null) enRefugio = r7.count;
+  if (r8.count != null) perdidaTotal = r8.count;
+  if (r9.count != null) perdidaParcial = r9.count;
+  if (r10.count != null) danosMayores = r10.count;
+  if (r11.count != null) danosMenores = r11.count;
+  if (r12.count != null) sinAfectacion = r12.count;
+  if (r13.data) {
+    acompEnRefugios = r13.data.reduce((s: number, p: any) => s + (p.acompanantes || 0), 0);
+    totalEnRefugios = r13.data.length + acompEnRefugios;
+  }
+  if (r14.data) totalAcompanantes = r14.data.reduce((s: number, p: any) => s + (p.acompanantes || 0), 0);
+  if (r15.count != null) recientes24h = r15.count;
+} catch (_) {}
 
-const { count: sosSinAtender } = await supabase
-  .from("solicitudes_sos")
-  .select("id", { count: "exact", head: true })
-  .eq("atendido", false);
+const afectacionLabels: Record<string, string> = {
+  perdida_total: "Pérdida total", perdida_parcial: "Pérdida parcial",
+  danos_mayores: "Daños mayores", danos_menores: "Daños menores", sin_afectacion: "Sin afectación",
+};
 ---
 
 <LayoutAdmin>
   <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
 
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Personas -->
-    <div class="bg-white rounded-xl shadow-md p-5">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="bg-blue-100 p-2.5 rounded-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-          </svg>
-        </div>
-        <p class="text-sm text-gray-500">Personas</p>
-      </div>
-      <p class="text-3xl font-extrabold text-gray-800">{totalPersonas ?? 0}</p>
-    </div>
+  <!-- Totales rápidos -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-xl shadow-md p-5"><p class="text-sm text-gray-500">Personas</p><p class="text-3xl font-extrabold text-gray-800">{personas}</p></div>
+    <div class="bg-white rounded-xl shadow-md p-5"><p class="text-sm text-gray-500">Refugios</p><p class="text-3xl font-extrabold text-gray-800">{refugios}</p></div>
+    <div class="bg-white rounded-xl shadow-md p-5"><p class="text-sm text-gray-500">Noticias</p><p class="text-3xl font-extrabold text-gray-800">{noticias}</p></div>
+    <a href="/admin/sos" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition">
+      <p class="text-sm text-gray-500">SOS pendientes</p>
+      <p class="text-3xl font-extrabold text-red-600">{sosPend}</p>
+    </a>
+  </div>
 
-    <!-- Refugios -->
-    <div class="bg-white rounded-xl shadow-md p-5">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="bg-emerald-100 p-2.5 rounded-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-          </svg>
-        </div>
-        <p class="text-sm text-gray-500">Refugios</p>
-      </div>
-      <p class="text-3xl font-extrabold text-gray-800">{totalRefugios ?? 0}</p>
-    </div>
+  <!-- Resumen detallado -->
+  <h2 class="text-lg font-bold text-gray-700 mb-4">Resumen de afectaci&oacute;n</h2>
 
-    <!-- Noticias -->
-    <div class="bg-white rounded-xl shadow-md p-5">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="bg-purple-100 p-2.5 rounded-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-          </svg>
-        </div>
-        <p class="text-sm text-gray-500">Noticias</p>
+  <!-- Por situación -->
+  <div class="bg-white rounded-xl shadow-md p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Por situaci&oacute;n actual</h3>
+    <div class="grid grid-cols-3 gap-4 text-center">
+      <div class="bg-blue-50 rounded-lg p-3">
+        <p class="text-2xl font-extrabold text-blue-700">{enVivienda}</p>
+        <p class="text-xs text-blue-600 mt-1">En vivienda</p>
       </div>
-      <p class="text-3xl font-extrabold text-gray-800">{totalNoticias ?? 0}</p>
+      <div class="bg-orange-50 rounded-lg p-3">
+        <p class="text-2xl font-extrabold text-orange-700">{evacuados}</p>
+        <p class="text-xs text-orange-600 mt-1">Evacuados</p>
+      </div>
+      <div class="bg-emerald-50 rounded-lg p-3">
+        <p class="text-2xl font-extrabold text-emerald-700">{enRefugio}</p>
+        <p class="text-xs text-emerald-600 mt-1">En refugio</p>
+      </div>
     </div>
+    {enRefugio > 0 && (
+      <p class="text-xs text-gray-500 mt-3">
+        {totalEnRefugios} personas en refugios (incluyendo {acompEnRefugios} acompañantes)
+      </p>
+    )}
+  </div>
 
-    <!-- SOS sin atender -->
-    <div class="bg-white rounded-xl shadow-md p-5">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="bg-red-100 p-2.5 rounded-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-          </svg>
+  <!-- Por nivel de afectación -->
+  <div class="bg-white rounded-xl shadow-md p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Por nivel de afectaci&oacute;n</h3>
+    <div class="space-y-2">
+      {[
+        { k: "perdida_total", v: perdidaTotal, bar: "bg-red-500", text: "text-red-700" },
+        { k: "perdida_parcial", v: perdidaParcial, bar: "bg-orange-500", text: "text-orange-700" },
+        { k: "danos_mayores", v: danosMayores, bar: "bg-yellow-500", text: "text-yellow-700" },
+        { k: "danos_menores", v: danosMenores, bar: "bg-blue-500", text: "text-blue-700" },
+        { k: "sin_afectacion", v: sinAfectacion, bar: "bg-gray-400", text: "text-gray-600" },
+      ].map(item => (
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium w-28 text-right text-gray-600">{afectacionLabels[item.k]}</span>
+          <div class="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
+            <div class={`${item.bar} h-full rounded-full transition-all`} style={`width: ${personas ? (item.v / personas) * 100 : 0}%`}></div>
+          </div>
+          <span class={`text-xs font-bold w-8 ${item.text}`}>{item.v}</span>
         </div>
-        <p class="text-sm text-gray-500">SOS pendientes</p>
-      </div>
-      <p class="text-3xl font-extrabold text-gray-800">{sosSinAtender ?? 0}</p>
+      ))}
+    </div>
+    <p class="text-xs text-gray-400 mt-3">
+      {personas - perdidaTotal - perdidaParcial - danosMayores - danosMenores - sinAfectacion} persona{personas - perdidaTotal - perdidaParcial - danosMayores - danosMenores - sinAfectacion !== 1 ? "s" : ""} sin clasificar
+    </p>
+  </div>
+
+  <!-- Datos adicionales -->
+  <div class="grid grid-cols-2 gap-4 mb-8">
+    <div class="bg-white rounded-xl shadow-md p-4">
+      <p class="text-xs text-gray-500">Total acompa&ntilde;antes</p>
+      <p class="text-2xl font-extrabold text-gray-800">{totalAcompanantes}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-md p-4">
+      <p class="text-xs text-gray-500">&Uacute;ltimas 24 horas</p>
+      <p class="text-2xl font-extrabold text-emerald-600">{recientes24h}</p>
     </div>
   </div>
 
-  <!-- Enlaces rápidos -->
-  <div class="mt-8 grid grid-cols-2 lg:grid-cols-5 gap-3">
-    <a href="/admin/personas" class="bg-white rounded-xl shadow-md p-4 text-center hover:shadow-lg transition text-sm font-medium text-gray-700 hover:text-red-700">
-      Ver personas
-    </a>
-    <a href="/admin/refugios" class="bg-white rounded-xl shadow-md p-4 text-center hover:shadow-lg transition text-sm font-medium text-gray-700 hover:text-red-700">
-      Gestionar refugios
-    </a>
-    <a href="/admin/necesidades" class="bg-white rounded-xl shadow-md p-4 text-center hover:shadow-lg transition text-sm font-medium text-gray-700 hover:text-red-700">
-      Necesidades
-    </a>
-    <a href="/admin/noticias" class="bg-white rounded-xl shadow-md p-4 text-center hover:shadow-lg transition text-sm font-medium text-gray-700 hover:text-red-700">
-      Noticias
-    </a>
-    <a href="/admin/configuracion" class="bg-white rounded-xl shadow-md p-4 text-center hover:shadow-lg transition text-sm font-medium text-gray-700 hover:text-red-700">
-      Configuración
-    </a>
+  <!-- Accesos rápidos -->
+  <div class="mt-8 grid grid-cols-2 lg:grid-cols-6 gap-3">
+    <a href="/admin/personas" class="bg-white rounded-xl shadow-md p-4 text-center text-sm font-medium text-gray-700 hover:text-red-700">Personas</a>
+    <a href="/admin/refugios" class="bg-white rounded-xl shadow-md p-4 text-center text-sm font-medium text-gray-700 hover:text-red-700">Refugios</a>
+    <a href="/admin/necesidades" class="bg-white rounded-xl shadow-md p-4 text-center text-sm font-medium text-gray-700 hover:text-red-700">Necesidades</a>
+    <a href="/admin/noticias" class="bg-white rounded-xl shadow-md p-4 text-center text-sm font-medium text-gray-700 hover:text-red-700">Noticias</a>
+    <a href="/admin/sos" class="bg-white rounded-xl shadow-md p-4 text-center text-sm font-medium text-gray-700 hover:text-red-700">SOS</a>
+    <a href="/admin/configuracion" class="bg-white rounded-xl shadow-md p-4 text-center text-sm font-medium text-gray-700 hover:text-red-700">Configuración</a>
   </div>
 </LayoutAdmin>

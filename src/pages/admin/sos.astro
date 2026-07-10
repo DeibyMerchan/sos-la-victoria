@@ -1,0 +1,73 @@
+---
+import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
+import { supabase } from "../../lib/supabaseClient";
+
+if (Astro.request.method === "POST") {
+  const fd = await Astro.request.formData();
+  const action = fd.get("_action") as string;
+  const id = fd.get("id") as string;
+  if (action === "atender" && id) { await supabase.from("solicitudes_sos").update({ atendido: true }).eq("id", id); }
+  else if (action === "delete" && id) { await supabase.from("solicitudes_sos").delete().eq("id", id); }
+  return Astro.redirect("/admin/sos");
+}
+
+let solicitudes: any[] = [];
+try {
+  const { data } = await supabase.from("solicitudes_sos").select("*").order("created_at", { ascending: false }).limit(100);
+  if (data) solicitudes = data;
+} catch (_) {}
+---
+
+<LayoutAdmin>
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">Solicitudes SOS</h1>
+
+  <div class="bg-white rounded-xl shadow overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-gray-500">
+        <tr>
+          <th class="px-4 py-3">Canal</th>
+          <th class="px-4 py-3 hidden sm:table-cell">Ubicación</th>
+          <th class="px-4 py-3 hidden sm:table-cell">Fecha</th>
+          <th class="px-4 py-3">Estado</th>
+          <th class="px-4 py-3" colspan="2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {solicitudes.length === 0 ? (
+          <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No hay solicitudes SOS.</td></tr>
+        ) : solicitudes.map((s: any) => (
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium capitalize">{s.canal || "—"}</td>
+            <td class="px-4 py-3 text-gray-500 hidden sm:table-cell max-w-xs truncate">
+              {s.ubicacion ? <a href={s.ubicacion.startsWith("http") ? s.ubicacion : "#"} target="_blank" class="text-blue-600 hover:underline text-xs">{s.ubicacion}</a> : "—"}
+            </td>
+            <td class="px-4 py-3 text-gray-400 text-xs hidden sm:table-cell whitespace-nowrap">
+              {new Date(s.created_at).toLocaleDateString("es-VE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+            </td>
+            <td class="px-4 py-3">
+              <span class={`text-xs px-2 py-0.5 rounded-full ${s.atendido ? "bg-gray-100 text-gray-500" : "bg-red-100 text-red-700"}`}>
+                {s.atendido ? "Atendido" : "Pendiente"}
+              </span>
+            </td>
+            <td class="px-4 py-1">
+              {!s.atendido && (
+                <form method="POST" class="inline">
+                  <input type="hidden" name="_action" value="atender" />
+                  <input type="hidden" name="id" value={s.id} />
+                  <button class="text-emerald-600 text-xs font-medium hover:underline">Atender</button>
+                </form>
+              )}
+            </td>
+            <td class="px-4 py-1">
+              <form method="POST" onsubmit="return confirm('¿Eliminar?')">
+                <input type="hidden" name="_action" value="delete" />
+                <input type="hidden" name="id" value={s.id} />
+                <button class="text-red-500 text-xs font-medium hover:underline">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</LayoutAdmin>

@@ -1,65 +1,40 @@
 ---
-import { supabase } from "../lib/supabaseClient";
-
-const accessToken = Astro.cookies.get("sb-access-token")?.value;
-const refreshToken = Astro.cookies.get("sb-refresh-token")?.value;
-
-let autenticado = false;
-
-try {
-  if (accessToken && refreshToken) {
-    const { data } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-    autenticado = !!data.user;
-  }
-} catch (_e) {
-  autenticado = false;
-}
-
-if (!autenticado) {
-  return Astro.redirect("/admin/login");
-}
 ---
 
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin — SOS La Victoria</title>
-  </head>
-  <body class="bg-gray-100 text-gray-900 min-h-screen">
-    <nav class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40">
-      <div class="flex items-center gap-4">
-        <a href="/admin" class="font-bold text-lg">Panel Admin</a>
-        <div class="hidden sm:flex gap-3 text-sm">
-          <a href="/admin/personas" class="hover:text-red-300 transition">Personas</a>
-          <a href="/admin/refugios" class="hover:text-red-300 transition">Refugios</a>
-          <a href="/admin/necesidades" class="hover:text-red-300 transition">Necesidades</a>
-          <a href="/admin/noticias" class="hover:text-red-300 transition">Noticias</a>
-          <a href="/admin/configuracion" class="hover:text-red-300 transition">Configuración</a>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <a href="/" class="text-xs text-gray-400 hover:text-white transition">Ver sitio</a>
-        <button id="btn-logout" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 transition">
-          Salir
-        </button>
-      </div>
-    </nav>
-    <main class="max-w-5xl mx-auto px-4 py-6">
-      <slot />
-    </main>
-    <script>
-      document.getElementById("btn-logout")?.addEventListener("click", async () => {
-        const { supabase } = await import("../lib/supabaseClient");
-        await supabase.auth.signOut();
-        document.cookie = "sb-access-token=; path=/; max-age=0";
-        document.cookie = "sb-refresh-token=; path=/; max-age=0";
-        window.location.href = "/admin/login";
-      });
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin — SOS La Victoria</title>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+  <nav class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-4 overflow-x-auto">
+      <a href="/admin" class="font-bold whitespace-nowrap">Panel</a>
+      <a href="/admin/personas" class="text-sm hover:text-red-300 whitespace-nowrap">Personas</a>
+      <a href="/admin/refugios" class="text-sm hover:text-red-300 whitespace-nowrap">Refugios</a>
+      <a href="/admin/necesidades" class="text-sm hover:text-red-300 whitespace-nowrap">Necesidades</a>
+      <a href="/admin/noticias" class="text-sm hover:text-red-300 whitespace-nowrap">Noticias</a>
+      <a href="/admin/sos" class="text-sm hover:text-red-300 whitespace-nowrap">SOS</a>
+      <a href="/admin/configuracion" class="text-sm hover:text-red-300 whitespace-nowrap">Config</a>
+    </div>
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <a href="/" class="text-xs text-gray-400 hover:text-white">Ver sitio</a>
+      <button id="btn-logout" class="bg-red-600 text-xs px-3 py-1.5 rounded hover:bg-red-700">Salir</button>
+    </div>
+  </nav>
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    <slot />
+  </main>
+  <script>
+    document.getElementById("btn-logout")?.addEventListener("click", async () => {
+      await import("../lib/supabaseClient").then(m => m.supabase.auth.signOut());
+      document.cookie = "sb-access-token=; path=/; max-age=0";
+      document.cookie = "sb-refresh-token=; path=/; max-age=0";
+      window.location.href = "/admin/login";
+    });
+  </script>
+</body>
 </html>

@@ -1,22 +1,76 @@
 ---
+export interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const SITE = "https://sos-la-victoria.vercel.app";
+const TITLE_DEFAULT = "SOS La Victoria — Ayuda humanitaria para damnificados del río Arauca";
+const DESC_DEFAULT = "Registro y consulta de personas afectadas por el desbordamiento del río Arauca en La Victoria, municipio Páez, estado Apure, Venezuela. Refugios, necesidades y emergencias.";
+
+const {
+  title = TITLE_DEFAULT,
+  description = DESC_DEFAULT,
+  ogImage = "/icons/og-image.svg",
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE).href;
 ---
 
 <!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#b91c1c" />
-    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>SOS La Victoria</title>
-  </head>
-  <body class="bg-gray-50 text-gray-900 min-h-screen">
-    <slot />
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js");
+<html lang="es-VE">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#b91c1c" />
+  <meta name="description" content={description} />
+  <meta name="keywords" content="La Victoria, Arauca, inundación, damnificados, ayuda humanitaria, refugios, emergencia, Apure, Venezuela" />
+  <meta name="author" content="SOS La Victoria" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={new URL(ogImage, SITE).href} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_VE" />
+  <meta property="og:site_name" content="SOS La Victoria" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={new URL(ogImage, SITE).href} />
+
+  <title>{title}</title>
+
+  <!-- Structured data: Organization -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "SOS La Victoria",
+    "description": DESC_DEFAULT,
+    "url": SITE,
+    "logo": new URL("/icons/favicon.svg", SITE).href,
+    "areaServed": {
+      "@type": "City",
+      "name": "La Victoria",
+      "containedInPlace": {
+        "@type": "AdministrativeArea",
+        "name": "Parroquia Urdaneta, Municipio Páez, Estado Apure"
       }
-    </script>
-  </body>
+    }
+  })} />
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  <slot />
+  <script>
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+  </script>
+</body>
 </html>

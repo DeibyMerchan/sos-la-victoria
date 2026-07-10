@@ -48,9 +48,15 @@ create table if not exists personas (
   acompanantes integer not null default 0,
   estado estado_persona not null default 'en_vivienda',
   refugio_id uuid references refugios(id) on delete set null,
+  nivel_afectacion text,
   observaciones text,
   created_at timestamptz not null default now()
 );
+
+-- Migración: agregar columna si no existe
+do $$ begin
+  alter table personas add column if not exists nivel_afectacion text;
+end $$;
 
 create table if not exists necesidades (
   id uuid primary key default gen_random_uuid(),
@@ -278,3 +284,4 @@ set
   whatsapp = coalesce(whatsapp, '+573002441066'),
   telefono = coalesce(telefono, '+573002441066')
 where id = 1;
+   

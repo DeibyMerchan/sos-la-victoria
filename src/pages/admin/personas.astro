@@ -2,117 +2,153 @@
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
 import { supabase } from "../../lib/supabaseClient";
 
+const POR_PAGINA = 10;
+
+function buildQS(q: string, pagina: number) {
+  const p: string[] = [];
+  if (q) p.push("q=" + encodeURIComponent(q));
+  if (pagina > 1) p.push("pagina=" + pagina);
+  return p.length ? "?" + p.join("&") : "";
+}
+
+let refugiosList: any[] = [];
+try { const { data } = await supabase.from("refugios").select("id, nombre").eq("activo", true).order("nombre"); if (data) refugiosList = data; } catch (_) {}
+
+const q = Astro.url.searchParams.get("q") || "";
+const pagina = Math.max(1, parseInt(Astro.url.searchParams.get("pagina") || "1") || 1);
+
 if (Astro.request.method === "POST") {
   const fd = await Astro.request.formData();
-  const action = (fd.get("_action") as string) || "";
-
-  if (action === "delete") {
-    const id = fd.get("id") as string;
-    if (id) {
-      await supabase.from("personas").delete().eq("id", id);
-    }
-  } else if (action === "estado") {
-    const id = fd.get("id") as string;
-    const estado = fd.get("estado") as string;
-    if (id && estado) {
-      await supabase.from("personas").update({ estado }).eq("id", id);
-    }
+  const action = fd.get("_action") as string;
+  const id = fd.get("id") as string;
+  if (!id) {
+    return Astro.redirect("/admin/personas" + buildQS(q, pagina));
   }
-
-  return Astro.redirect("/admin/personas?" + (Astro.url.searchParams.get("q") ? "q=" + encodeURIComponent(Astro.url.searchParams.get("q") || "") : ""));
+  if (action === "delete") { await supabase.from("personas").delete().eq("id", id); }
+  else if (action === "estado") {
+    const e = fd.get("estado") as string;
+    const rid = e === "en_refugio" ? ((fd.get("refugio_id") as string) || null) : null;
+    await supabase.from("personas").update({ estado: e, refugio_id: rid }).eq("id", id);
+  } else if (action === "refugio") {
+    const rid = (fd.get("refugio_id") as string) || null;
+    await supabase.from("personas").update({ refugio_id: rid }).eq("id", id);
+  }
+  return Astro.redirect("/admin/personas" + buildQS(q, pagina));
 }
 
-let termino = Astro.url.searchParams.get("q") || "";
 let personas: any[] = [];
+let totalPersonas = 0;
+const offset = (pagina - 1) * POR_PAGINA;
 
-if (termino) {
-  const { data } = await supabase.rpc("buscar_persona", { termino });
-  personas = data || [];
-} else {
-  const { data } = await supabase
-    .from("personas")
-    .select("id, nombres, apellidos, cedula, sin_cedula, telefono, sector, estado, refugio_id, acompanantes, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
-  personas = data || [];
-}
+try {
+  if (q) {
+    const selectCols = "id, nombres, apellidos, cedula, sin_cedula, telefono, sector, estado, refugio_id, acompanantes, nivel_afectacion, created_at";
+    const esNumero = /^\d+$/.test(q);
+    const filtro = esNumero
+      ? `cedula.eq.${q},nombres.ilike.*${q}*,apellidos.ilike.*${q}*`
+      : `nombres.ilike.*${q}*,apellidos.ilike.*${q}*`;
+    const [{ count }, { data }] = await Promise.all([
+      supabase.from("personas").select("id", { count: "exact", head: true }).or(filtro),
+      supabase.from("personas").select(selectCols).or(filtro).order("created_at", { ascending: false }).range(offset, offset + POR_PAGINA - 1),
+    ]);
+    totalPersonas = count || 0;
+    if (data) personas = data;
+  } else {
+    const [{ count }, { data }] = await Promise.all([
+      supabase.from("personas").select("*", { count: "exact", head: true }),
+      supabase.from("personas")
+        .select("id, nombres, apellidos, cedula, sin_cedula, telefono, sector, estado, refugio_id, acompanantes, nivel_afectacion, created_at")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + POR_PAGINA - 1),
+    ]);
+    totalPersonas = count || 0;
+    if (data) personas = data;
+  }
+} catch (_) {}
+
+const totalPaginas = Math.max(1, Math.ceil(totalPersonas / POR_PAGINA));
 ---
 
 <LayoutAdmin>
   <h1 class="text-2xl font-bold text-gray-800 mb-6">Personas</h1>
-
   <form method="GET" class="mb-6 flex gap-2">
-    <input
-      type="text"
-      name="q"
-      value={termino}
-      placeholder="Buscar por cédula, nombre o apellido..."
-      class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
-    />
-    <button type="submit" class="bg-red-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-red-800 transition">
-      Buscar
-    </button>
-    {termino && (
-      <a href="/admin/personas" class="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition inline-flex items-center">
-        Limpiar
-      </a>
-    )}
+    <input type="text" name="q" value={q} placeholder="Buscar por cédula, nombre o apellido..." class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
+    <button type="submit" class="bg-red-700 text-white px-4 py-2.5 rounded-lg text-sm hover:bg-red-800">Buscar</button>
+    {q && <a href="/admin/personas" class="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-sm hover:bg-gray-300 inline-flex items-center">Limpiar</a>}
   </form>
-
   <div class="bg-white rounded-xl shadow overflow-x-auto">
     <table class="w-full text-sm">
       <thead class="bg-gray-50 text-left text-gray-500">
         <tr>
-          <th class="px-4 py-3 font-medium">Nombre</th>
-          <th class="px-4 py-3 font-medium">Cédula</th>
-          <th class="px-4 py-3 font-medium hidden sm:table-cell">Teléfono</th>
-          <th class="px-4 py-3 font-medium hidden sm:table-cell">Sector</th>
-          <th class="px-4 py-3 font-medium">Estado</th>
-          <th class="px-4 py-3 font-medium">Acomp.</th>
-          <th class="px-4 py-3 font-medium w-10"></th>
+          <th class="px-4 py-3">Nombre</th>
+          <th class="px-4 py-3">Cédula</th>
+          <th class="px-4 py-3 hidden sm:table-cell">Sector</th>
+          <th class="px-4 py-3">Estado</th>
+          <th class="px-4 py-3 hidden sm:table-cell">Afectación</th>
+          <th class="px-4 py-3">Refugio</th>
+          <th class="px-4 py-3">Acomp</th>
+          <th class="px-4 py-3"></th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        {personas.length === 0 ? (
-          <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-gray-400">
-              {termino ? "No se encontraron resultados." : "No hay personas registradas."}
+        {personas.length === 0 ? <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">{q ? "Sin resultados." : "No hay personas."}</td></tr> : personas.map((p: any) => (
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">{p.nombres} {p.apellidos}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{p.cedula?.startsWith("SINCED-") ? <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Sin cédula</span> : p.cedula}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs hidden sm:table-cell">{p.sector || "—"}</td>
+            <td class="px-4 py-3">
+              <form method="POST" class="inline">
+                <input type="hidden" name="_action" value="estado" />
+                <input type="hidden" name="id" value={p.id} />
+                <select name="estado" class={`text-xs border border-gray-300 rounded px-2 py-1 bg-white ${p.estado !== "en_refugio" ? "w-32" : "w-28"}`} onchange="this.form.submit()">
+                  <option value="en_vivienda" selected={p.estado === "en_vivienda"}>En vivienda</option>
+                  <option value="evacuado" selected={p.estado === "evacuado"}>Evacuado</option>
+                  <option value="en_refugio" selected={p.estado === "en_refugio"}>En refugio</option>
+                </select>
+                {p.estado === "en_refugio" && (
+                  <select name="refugio_id" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white ml-1" onchange="this.form.submit()">
+                    <option value="">Sin refugio</option>
+                    {refugiosList.map(r => <option value={r.id} selected={p.refugio_id === r.id}>{r.nombre}</option>)}
+                  </select>
+                )}
+              </form>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500 hidden sm:table-cell">
+              {p.nivel_afectacion === "perdida_total" ? "Pérdida total" :
+               p.nivel_afectacion === "perdida_parcial" ? "Pérdida parcial" :
+               p.nivel_afectacion === "danos_mayores" ? "Daños mayores" :
+               p.nivel_afectacion === "danos_menores" ? "Daños menores" :
+               p.nivel_afectacion === "sin_afectacion" ? "Sin afectación" : "—"}
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500">
+              {p.refugio_id ? (refugiosList.find(r => r.id === p.refugio_id)?.nombre || "Asignado") : "—"}
+            </td>
+            <td class="px-4 py-3 text-center text-xs">{p.acompanantes}</td>
+            <td class="px-4 py-3">
+              <form method="POST" onsubmit="return confirm('¿Eliminar?')"><input type="hidden" name="_action" value="delete" /><input type="hidden" name="id" value={p.id} /><button class="text-red-500 text-xs font-medium">Eliminar</button></form>
             </td>
           </tr>
-        ) : (
-          personas.map((p: any) => (
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 font-medium">{p.nombres} {p.apellidos}</td>
-              <td class="px-4 py-3 text-gray-500">
-                {p.cedula.startsWith("SINCED-") ? (
-                  <span class="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Sin cédula</span>
-                ) : p.cedula}
-              </td>
-              <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">{p.telefono || "—"}</td>
-              <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">{p.sector || "—"}</td>
-              <td class="px-4 py-3">
-                <form method="POST" action={"/admin/personas" + (termino ? "?q=" + encodeURIComponent(termino) : "")} class="inline">
-                  <input type="hidden" name="_action" value="estado" />
-                  <input type="hidden" name="id" value={p.id} />
-                  <select name="estado" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white" onchange="this.form.submit()">
-                    <option value="en_vivienda" selected={p.estado === "en_vivienda"}>En vivienda</option>
-                    <option value="evacuado" selected={p.estado === "evacuado"}>Evacuado</option>
-                    <option value="en_refugio" selected={p.estado === "en_refugio"}>En refugio</option>
-                  </select>
-                </form>
-              </td>
-              <td class="px-4 py-3 text-center">{p.acompanantes}</td>
-              <td class="px-4 py-3">
-                <form method="POST" action={"/admin/personas" + (termino ? "?q=" + encodeURIComponent(termino) : "")} onsubmit="return confirm('¿Eliminar a esta persona?')">
-                  <input type="hidden" name="_action" value="delete" />
-                  <input type="hidden" name="id" value={p.id} />
-                  <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
-                </form>
-              </td>
-            </tr>
-          ))
-        )}
+        ))}
       </tbody>
     </table>
+    {totalPaginas > 1 && (
+      <div class="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+        <span class="text-sm text-gray-600">
+          {totalPersonas} persona{totalPersonas !== 1 ? "s" : ""} &mdash; P&aacute;gina {pagina} de {totalPaginas}
+        </span>
+        <div class="flex gap-1">
+          {pagina > 1 ? (
+            <a href={"/admin/personas" + buildQS(q, pagina - 1)} class="px-3 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100">&larr; Anterior</a>
+          ) : (
+            <span class="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed">&larr; Anterior</span>
+          )}
+          {pagina < totalPaginas ? (
+            <a href={"/admin/personas" + buildQS(q, pagina + 1)} class="px-3 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100">Siguiente &rarr;</a>
+          ) : (
+            <span class="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed">Siguiente &rarr;</span>
+          )}
+        </div>
+      </div>
+    )}
   </div>
 </LayoutAdmin>

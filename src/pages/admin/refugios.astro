@@ -4,186 +4,94 @@ import { supabase } from "../../lib/supabaseClient";
 
 if (Astro.request.method === "POST") {
   const fd = await Astro.request.formData();
-  const action = (fd.get("_action") as string) || "";
-
+  const action = fd.get("_action") as string;
   if (action === "create") {
-    const nombre = (fd.get("nombre") as string).trim();
-    const direccion = (fd.get("direccion") as string).trim() || null;
-    const latitudRaw = fd.get("latitud") as string;
-    const longitudRaw = fd.get("longitud") as string;
-    const capacidad = parseInt(fd.get("capacidad") as string) || 0;
-    const latitud = latitudRaw ? parseFloat(latitudRaw) : null;
-    const longitud = longitudRaw ? parseFloat(longitudRaw) : null;
-    if (nombre) {
-      await supabase.from("refugios").insert({ nombre, direccion, latitud, longitud, capacidad });
-    }
+    const n = (fd.get("nombre") as string).trim();
+    const d = (fd.get("direccion") as string).trim() || null;
+    const lat = parseFloat(fd.get("latitud") as string) || null;
+    const lng = parseFloat(fd.get("longitud") as string) || null;
+    const cap = parseInt(fd.get("capacidad") as string) || 0;
+    const ocup = parseInt(fd.get("ocupacion") as string) || 0;
+    if (n) await supabase.from("refugios").insert({ nombre: n, direccion: d, latitud: lat, longitud: lng, capacidad: cap, ocupacion: ocup });
   } else if (action === "edit") {
     const id = fd.get("id") as string;
-    const nombre = (fd.get("nombre") as string).trim();
-    const direccion = (fd.get("direccion") as string).trim() || null;
-    const latitudRaw = fd.get("latitud") as string;
-    const longitudRaw = fd.get("longitud") as string;
-    const capacidad = parseInt(fd.get("capacidad") as string) || 0;
-    const latitud = latitudRaw ? parseFloat(latitudRaw) : null;
-    const longitud = longitudRaw ? parseFloat(longitudRaw) : null;
-    if (id && nombre) {
-      await supabase.from("refugios").update({ nombre, direccion, latitud, longitud, capacidad }).eq("id", id);
-    }
+    const n = (fd.get("nombre") as string).trim();
+    const d = (fd.get("direccion") as string).trim() || null;
+    const lat = parseFloat(fd.get("latitud") as string) || null;
+    const lng = parseFloat(fd.get("longitud") as string) || null;
+    const cap = parseInt(fd.get("capacidad") as string) || 0;
+    const ocup = parseInt(fd.get("ocupacion") as string) || 0;
+    if (id && n) await supabase.from("refugios").update({ nombre: n, direccion: d, latitud: lat, longitud: lng, capacidad: cap, ocupacion: ocup }).eq("id", id);
   } else if (action === "delete") {
     const id = fd.get("id") as string;
-    if (id) {
-      await supabase.from("refugios").delete().eq("id", id);
-    }
+    if (id) await supabase.from("refugios").delete().eq("id", id);
   } else if (action === "toggle") {
     const id = fd.get("id") as string;
     const activo = fd.get("activo") === "true";
-    if (id) {
-      await supabase.from("refugios").update({ activo: !activo }).eq("id", id);
-    }
+    if (id) await supabase.from("refugios").update({ activo: !activo }).eq("id", id);
   }
-
   return Astro.redirect("/admin/refugios");
 }
 
-const { data: refugios } = await supabase
-  .from("refugios")
-  .select("*")
-  .order("nombre");
+let refugios: any[] = [];
+try { const { data } = await supabase.from("refugios").select("*").order("nombre"); if (data) refugios = data; } catch (_) {}
 ---
 
 <LayoutAdmin>
   <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestionar Refugios</h1>
 
-  <!-- Formulario crear refugio -->
-  <details class="bg-white rounded-xl shadow p-5 mb-6 group" open={refugios && refugios.length === 0}>
-    <summary class="font-semibold text-gray-700 cursor-pointer list-none flex items-center justify-between">
-      <span>Nuevo refugio</span>
-      <svg class="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-      </svg>
-    </summary>
-    <form method="POST" action="/admin/refugios" class="space-y-4 mt-4">
+  <details class="bg-white rounded-xl shadow p-5 mb-6" open={refugios.length === 0}>
+    <summary class="font-semibold text-gray-700 cursor-pointer flex items-center justify-between">Nuevo refugio <svg class="h-5 w-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+    <form method="POST" class="space-y-4 mt-4">
       <input type="hidden" name="_action" value="create" />
       <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Nombre *</label>
-          <input type="text" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Dirección</label>
-          <input type="text" name="direccion" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Latitud</label>
-          <input type="number" step="any" name="latitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Longitud</label>
-          <input type="number" step="any" name="longitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Capacidad *</label>
-          <input type="number" name="capacidad" value="0" min="0" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-        </div>
+        <div><label class="block text-xs text-gray-500 mb-1">Nombre *</label><input type="text" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-500 mb-1">Dirección</label><input type="text" name="direccion" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-500 mb-1">Latitud</label><input type="number" step="any" name="latitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-500 mb-1">Longitud</label><input type="number" step="any" name="longitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-500 mb-1">Capacidad</label><input type="number" name="capacidad" value="0" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-500 mb-1">Ocupación actual</label><input type="number" name="ocupacion" value="0" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
       </div>
-      <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition">
-        Crear refugio
-      </button>
+      <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-800">Crear refugio</button>
     </form>
   </details>
 
-  <!-- Listado -->
-  <div class="mt-6 space-y-3">
-    {!refugios || refugios.length === 0 ? (
-      <p class="text-center text-gray-400 py-8">No hay refugios registrados.</p>
-    ) : (
-      refugios.map((r: any) => (
-        <div class="bg-white rounded-xl shadow p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-semibold text-gray-800">{r.nombre}</h3>
-                <form method="POST" action="/admin/refugios" class="inline">
-                  <input type="hidden" name="_action" value="toggle" />
-                  <input type="hidden" name="id" value={r.id} />
-                  <input type="hidden" name="activo" value={String(r.activo)} />
-                  <button type="submit" class={`text-xs font-medium px-2 py-0.5 rounded-full ${r.activo !== false ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
-                    {r.activo !== false ? "Activo" : "Inactivo"}
-                  </button>
-                </form>
-              </div>
-              {r.direccion && <p class="text-xs text-gray-500 mt-1">{r.direccion}</p>}
-              <div class="flex gap-4 mt-2 text-xs text-gray-500">
-                <span>Ocup: {r.ocupacion}/{r.capacidad}</span>
-                {r.latitud && r.longitud && (
-                  <span>Coords: {r.latitud.toFixed(5)}, {r.longitud.toFixed(5)}</span>
-                )}
-              </div>
+  <div class="space-y-3">
+    {refugios.length === 0 ? <p class="text-center text-gray-400 py-8">No hay refugios.</p> : refugios.map((r: any) => (
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold">{r.nombre}</h3>
+              <form method="POST" class="inline"><input type="hidden" name="_action" value="toggle" /><input type="hidden" name="id" value={r.id} /><input type="hidden" name="activo" value={String(r.activo)} /><button class={`text-xs px-2 py-0.5 rounded-full ${r.activo !== false ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>{r.activo !== false ? "Activo" : "Inactivo"}</button></form>
             </div>
-            <div class="flex gap-2 flex-shrink-0">
-              <!-- Botón Editar -->
-              <button
-                type="button"
-                class="text-blue-500 hover:text-blue-700 text-xs font-medium"
-                data-id={r.id}
-                data-nombre={r.nombre}
-                data-direccion={r.direccion || ""}
-                data-latitud={r.latitud || ""}
-                data-longitud={r.longitud || ""}
-                data-capacidad={r.capacidad}
-                onclick="abrirEditor(this)"
-              >
-                Editar
-              </button>
-              <!-- Botón Eliminar -->
-              <form method="POST" action="/admin/refugios" onsubmit="return confirm('¿Eliminar este refugio?')" class="inline">
-                <input type="hidden" name="_action" value="delete" />
-                <input type="hidden" name="id" value={r.id} />
-                <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
-              </form>
-            </div>
+            {r.direccion && <p class="text-xs text-gray-500 mt-1">{r.direccion}</p>}
+            <p class="text-xs text-gray-500 mt-1">Ocup: {r.ocupacion}/{r.capacidad} {r.latitud ? `| ${r.latitud.toFixed(5)}, ${r.longitud?.toFixed(5)}` : ""}</p>
+          </div>
+          <div class="flex gap-2 flex-shrink-0">
+            <button type="button" class="text-blue-500 text-xs font-medium" data-id={r.id} data-nombre={r.nombre} data-direccion={r.direccion || ""} data-latitud={r.latitud || ""} data-longitud={r.longitud || ""} data-capacidad={r.capacidad} data-ocupacion={r.ocupacion} onclick="abrirEditor(this)">Editar</button>
+            <form method="POST" onsubmit="return confirm('¿Eliminar?')"><input type="hidden" name="_action" value="delete" /><input type="hidden" name="id" value={r.id} /><button class="text-red-500 text-xs font-medium">Eliminar</button></form>
           </div>
         </div>
-      ))
-    )}
+      </div>
+    ))}
   </div>
 
-  <!-- Modal Editar -->
-  <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+  <!-- Modal editar -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold text-gray-800">Editar refugio</h2>
-        <button onclick="cerrarEditor()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-      </div>
-      <form id="edit-form" method="POST" action="/admin/refugios" class="space-y-4">
-        <input type="hidden" name="_action" value="edit" />
-        <input type="hidden" name="id" id="edit-id" />
+      <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">Editar refugio</h2><button onclick="document.getElementById('edit-modal')?.classList.add('hidden')" class="text-gray-400 text-2xl">&times;</button></div>
+      <form method="POST">
+        <input type="hidden" name="_action" value="edit" /><input type="hidden" name="id" id="edit-id" />
         <div class="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Nombre *</label>
-            <input type="text" name="nombre" id="edit-nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Dirección</label>
-            <input type="text" name="direccion" id="edit-direccion" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Latitud</label>
-            <input type="number" step="any" name="latitud" id="edit-latitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Longitud</label>
-            <input type="number" step="any" name="longitud" id="edit-longitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Capacidad *</label>
-            <input type="number" name="capacidad" id="edit-capacidad" min="0" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
-          </div>
+          <div><label class="block text-xs text-gray-500 mb-1">Nombre *</label><input type="text" name="nombre" id="edit-nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+          <div><label class="block text-xs text-gray-500 mb-1">Dirección</label><input type="text" name="direccion" id="edit-direccion" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+          <div><label class="block text-xs text-gray-500 mb-1">Latitud</label><input type="number" step="any" name="latitud" id="edit-latitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+          <div><label class="block text-xs text-gray-500 mb-1">Longitud</label><input type="number" step="any" name="longitud" id="edit-longitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+          <div><label class="block text-xs text-gray-500 mb-1">Capacidad</label><input type="number" name="capacidad" id="edit-capacidad" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
+          <div><label class="block text-xs text-gray-500 mb-1">Ocupación actual</label><input type="number" name="ocupacion" id="edit-ocupacion" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
         </div>
-        <div class="flex gap-3 justify-end">
-          <button type="button" onclick="cerrarEditor()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">Cancelar</button>
-          <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition">Guardar</button>
-        </div>
+        <div class="flex gap-3 justify-end mt-4"><button type="button" onclick="document.getElementById('edit-modal')?.classList.add('hidden')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">Cancelar</button><button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm hover:bg-red-800">Guardar</button></div>
       </form>
     </div>
   </div>
@@ -191,20 +99,15 @@ const { data: refugios } = await supabase
 
 <script>
   function abrirEditor(btn: HTMLButtonElement) {
-    const ds = btn.dataset;
-    (document.getElementById("edit-id") as HTMLInputElement).value = ds.id || "";
-    (document.getElementById("edit-nombre") as HTMLInputElement).value = ds.nombre || "";
-    (document.getElementById("edit-direccion") as HTMLInputElement).value = ds.direccion || "";
-    (document.getElementById("edit-latitud") as HTMLInputElement).value = ds.latitud || "";
-    (document.getElementById("edit-longitud") as HTMLInputElement).value = ds.longitud || "";
-    (document.getElementById("edit-capacidad") as HTMLInputElement).value = ds.capacidad || "0";
-    document.getElementById("edit-modal")!.classList.remove("hidden");
+    const d = btn.dataset;
+    (document.getElementById("edit-id") as HTMLInputElement).value = d.id || "";
+    (document.getElementById("edit-nombre") as HTMLInputElement).value = d.nombre || "";
+    (document.getElementById("edit-direccion") as HTMLInputElement).value = d.direccion || "";
+    (document.getElementById("edit-latitud") as HTMLInputElement).value = d.latitud || "";
+    (document.getElementById("edit-longitud") as HTMLInputElement).value = d.longitud || "";
+    (document.getElementById("edit-capacidad") as HTMLInputElement).value = d.capacidad || "0";
+    (document.getElementById("edit-ocupacion") as HTMLInputElement).value = d.ocupacion || "0";
+    document.getElementById("edit-modal")?.classList.remove("hidden");
   }
-
-  function cerrarEditor() {
-    document.getElementById("edit-modal")!.classList.add("hidden");
-  }
-
   (window as any).abrirEditor = abrirEditor;
-  (window as any).cerrarEditor = cerrarEditor;
 </script>

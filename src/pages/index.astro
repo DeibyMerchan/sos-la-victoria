@@ -3,125 +3,65 @@ import LayoutPublico from "../layouts/LayoutPublico.astro";
 import Header from "../components/Header.astro";
 import ContadorPersonas from "../components/ContadorPersonas.astro";
 import TarjetaRefugio from "../components/TarjetaRefugio.astro";
-import MapaLeaflet from "../components/MapaLeaflet.astro";
 import ListaNecesidades from "../components/ListaNecesidades.astro";
 import ListaNoticias from "../components/ListaNoticias.astro";
 import { supabase } from "../lib/supabaseClient";
 
-let config: any = null;
-let refugioPrincipal: any = null;
+let refugios: any[] = [];
 let necesidades: any[] = [];
 let noticias: any[] = [];
-let ultimoRegistro: any = null;
 
 try {
-  const r1 = await supabase.from("configuracion").select("contador_visible, refugio_principal_id").eq("id", 1).maybeSingle();
-  if (!r1.error && r1.data) config = r1.data;
-
-  if (config?.refugio_principal_id) {
-    const r2 = await supabase.from("refugios").select("id, nombre, direccion, latitud, longitud, capacidad, ocupacion").eq("id", config.refugio_principal_id).eq("activo", true).maybeSingle();
-    if (!r2.error && r2.data) refugioPrincipal = r2.data;
-  }
-
-  const r3 = await supabase.from("necesidades").select("id, nombre, prioridad").eq("activo", true).order("prioridad", { ascending: true });
-  if (!r3.error && r3.data) necesidades = r3.data;
-
-  const r4 = await supabase.from("noticias").select("id, titulo, contenido, created_at").order("created_at", { ascending: false }).limit(5);
-  if (!r4.error && r4.data) noticias = r4.data;
-
-  const r5 = await supabase.from("personas").select("created_at").order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (!r5.error && r5.data) ultimoRegistro = r5.data;
-} catch (_e) {
-  // La app sigue funcionando aunque la DB falle
-}
+  const r1 = await supabase.from("refugios").select("*").eq("activo", true).order("nombre");
+  if (!r1.error && r1.data) refugios = r1.data;
+  const r2 = await supabase.from("necesidades").select("id, nombre, prioridad").eq("activo", true).order("prioridad");
+  if (!r2.error && r2.data) necesidades = r2.data;
+  const r3 = await supabase.from("noticias").select("id, titulo, contenido, created_at").order("created_at", { ascending: false }).limit(5);
+  if (!r3.error && r3.data) noticias = r3.data;
+} catch (_) {}
 ---
 
-<LayoutPublico>
+<LayoutPublico
+  title="SOS La Victoria — Ayuda humanitaria para damnificados del río Arauca"
+  description="Registro y consulta de personas afectadas por el desbordamiento del río Arauca en La Victoria, Apure, Venezuela. Refugios activos, necesidades urgentes y noticias."
+>
   <Header />
-
-  <main class="max-w-lg mx-auto px-4 py-6 space-y-5 pb-20">
-    <!-- Logo y nombre -->
+  <main class="max-w-lg mx-auto px-4 py-6 space-y-5 pb-10">
     <div class="text-center">
       <h1 class="text-3xl font-extrabold text-red-700 tracking-tight">SOS LA VICTORIA</h1>
       <p class="text-sm text-gray-500 mt-1">Parroquia Urdaneta, Municipio Páez, Estado Apure</p>
     </div>
 
-    <!-- Contador (si está visible) -->
-    {
-      (!config || config.contador_visible !== false) && (
-        <ContadorPersonas />
-      )
-    }
+    <ContadorPersonas />
 
-    <!-- Botones principales -->
     <div class="grid grid-cols-2 gap-3">
-      <a
-        href="/registrar"
-        class="flex flex-col items-center gap-2 bg-red-700 text-white rounded-2xl p-5 shadow-md hover:bg-red-800 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-        </svg>
+      <a href="/registrar" class="flex flex-col items-center gap-2 bg-red-700 text-white rounded-2xl p-5 shadow-md hover:bg-red-800 transition">
+        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         <span class="font-bold text-sm">Registrar Persona</span>
       </a>
-      <a
-        href="/consultar"
-        class="flex flex-col items-center gap-2 bg-blue-600 text-white rounded-2xl p-5 shadow-md hover:bg-blue-700 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
+      <a href="/consultar" class="flex flex-col items-center gap-2 bg-blue-600 text-white rounded-2xl p-5 shadow-md hover:bg-blue-700 transition">
+        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         <span class="font-bold text-sm">Consultar Persona</span>
       </a>
     </div>
 
-    <!-- Refugio Principal -->
-    {
-      refugioPrincipal && (
-        <>
-          <TarjetaRefugio
-            nombre={refugioPrincipal.nombre}
-            direccion={refugioPrincipal.direccion}
-            ocupacion={refugioPrincipal.ocupacion}
-            capacidad={refugioPrincipal.capacidad}
-          />
-          {
-            refugioPrincipal.latitud && refugioPrincipal.longitud && (
-              <MapaLeaflet
-                latitud={refugioPrincipal.latitud}
-                longitud={refugioPrincipal.longitud}
-                nombre={refugioPrincipal.nombre}
-              />
-            )
-          }
-        </>
-      )
-    }
+    <!-- Refugios uno tras otro -->
+    {refugios.length > 0 ? (
+      <div>
+        <h2 class="text-lg font-bold text-gray-800 mb-3">Puntos de Interés / Refugios</h2>
+        <div class="space-y-3">
+          {refugios.map(r => (
+            <TarjetaRefugio nombre={r.nombre} direccion={r.direccion} ocupacion={r.ocupacion} capacidad={r.capacidad} latitud={r.latitud} longitud={r.longitud} />
+          ))}
+        </div>
+      </div>
+    ) : null}
 
-    <!-- Necesidades -->
-    <ListaNecesidades necesidades={necesidades || []} />
+    <ListaNecesidades necesidades={necesidades} />
+    <ListaNoticias noticias={noticias} />
 
-    <!-- Noticias -->
-    <ListaNoticias noticias={noticias || []} />
-
-    <!-- Footer -->
     <footer class="text-center text-xs text-gray-400 pt-4 border-t border-gray-200">
       <p>SOS La Victoria &mdash; Ayuda humanitaria para los afectados por el desbordamiento del río Arauca</p>
-      {
-        ultimoRegistro?.created_at && (
-          <p class="mt-1">
-            Última actualización: {
-              new Date(ultimoRegistro.created_at).toLocaleDateString("es-VE", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            }
-          </p>
-        )
-      }
     </footer>
   </main>
 </LayoutPublico>
