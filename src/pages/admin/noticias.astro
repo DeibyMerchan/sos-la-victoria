@@ -1,37 +1,89 @@
 ---
 import LayoutAdmin from "../../layouts/LayoutAdmin.astro";
-import { supabase } from "../../lib/supabaseClient";
+import { createSupabaseAdmin } from "../../lib/supabaseAdmin";
+
+const supabaseAdmin = createSupabaseAdmin();
+
+let mensaje = "";
 
 if (Astro.request.method === "POST") {
   const fd = await Astro.request.formData();
   const action = fd.get("_action") as string;
-  if (action === "create") { const t = (fd.get("titulo") as string).trim(); const c = (fd.get("contenido") as string).trim(); if (t && c) await supabase.from("noticias").insert({ titulo: t, contenido: c }); }
-  else if (action === "delete") { const id = fd.get("id") as string; if (id) await supabase.from("noticias").delete().eq("id", id); }
-  return Astro.redirect("/admin/noticias");
+  const id = fd.get("id") as string;
+  const t = (fd.get("titulo") as string).trim();
+  const c = (fd.get("contenido") as string).trim();
+
+  if (action === "create" && t && c) {
+    const { error } = await supabaseAdmin.from("noticias").insert({ titulo: t, contenido: c });
+    mensaje = error ? "Error al publicar: " + error.message : "Noticia publicada.";
+  } else if (action === "update" && id && t && c) {
+    const { error } = await supabaseAdmin.from("noticias").update({ titulo: t, contenido: c }).eq("id", id);
+    if (!error) return Astro.redirect("/admin/noticias");
+    mensaje = "Error al actualizar: " + error.message;
+  } else if (action === "delete" && id) {
+    const { error } = await supabaseAdmin.from("noticias").delete().eq("id", id);
+    mensaje = error ? "Error al eliminar: " + error.message : "";
+  }
 }
 
+const editId = Astro.url.searchParams.get("edit") || "";
+
 let noticias: any[] = [];
-try { const { data } = await supabase.from("noticias").select("*").order("created_at", { ascending: false }); if (data) noticias = data; } catch (_) {}
+try {
+  const { data } = await supabaseAdmin.from("noticias").select("*").order("created_at", { ascending: false });
+  if (data) noticias = data;
+} catch (_) {}
+
+const editNoticia = editId ? noticias.find(n => n.id === editId) : null;
 ---
 
 <LayoutAdmin>
   <h1 class="text-2xl font-bold text-gray-800 mb-6">Noticias</h1>
+
+  {mensaje && (
+    <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-4 py-3 text-sm">{mensaje}</div>
+  )}
+
   <form method="POST" class="bg-white rounded-xl shadow p-5 mb-6 space-y-4">
-    <input type="hidden" name="_action" value="create" />
-    <h2 class="font-semibold text-gray-700">Nueva noticia</h2>
-    <div><label class="block text-xs text-gray-500 mb-1">Título *</label><input type="text" name="titulo" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" /></div>
-    <div><label class="block text-xs text-gray-500 mb-1">Contenido *</label><textarea name="contenido" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"></textarea></div>
-    <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm hover:bg-red-800">Publicar</button>
+    <input type="hidden" name="_action" value={editId ? "update" : "create"} />
+    {editId && <input type="hidden" name="id" value={editId} />}
+    <h2 class="font-semibold text-gray-700">{editId ? "Editar noticia" : "Nueva noticia"}</h2>
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Título *</label>
+      <input type="text" name="titulo" required value={editNoticia?.titulo || ""} class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" />
+    </div>
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Contenido *</label>
+      <textarea name="contenido" required rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none">{editNoticia?.contenido || ""}</textarea>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg text-sm hover:bg-red-800 font-medium">
+        {editId ? "Guardar cambios" : "Publicar"}
+      </button>
+      {editId && <a href="/admin/noticias" class="bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 inline-flex items-center">Cancelar</a>}
+    </div>
   </form>
+
   <div class="space-y-4">
     {noticias.length === 0 ? <p class="text-center text-gray-400 py-8">No hay noticias.</p> : noticias.map((n: any) => (
-      <div class="bg-white rounded-xl shadow p-4 flex items-start justify-between gap-4">
-        <div>
-          <h3 class="font-semibold">{n.titulo}</h3>
-          <p class="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" })}</p>
-          <p class="text-sm text-gray-600 mt-2">{n.contenido}</p>
+      <div class="bg-white rounded-xl shadow p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-800">{n.titulo}</h3>
+            <p class="text-xs text-gray-400 mt-1">
+              {new Date(n.created_at).toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </p>
+            <p class="text-sm text-gray-600 mt-3 leading-relaxed whitespace-pre-wrap">{n.contenido}</p>
+          </div>
         </div>
-        <form method="POST" onsubmit="return confirm('¿Eliminar?')"><input type="hidden" name="_action" value="delete" /><input type="hidden" name="id" value={n.id} /><button class="text-red-500 text-xs font-medium">Eliminar</button></form>
+        <div class="flex gap-3 mt-3 pt-3 border-t border-gray-100">
+          <a href={`/admin/noticias?edit=${n.id}`} class="text-blue-600 text-xs font-medium hover:underline">Editar</a>
+          <form method="POST" onsubmit="return confirm('¿Eliminar esta noticia?')" class="inline">
+            <input type="hidden" name="_action" value="delete" />
+            <input type="hidden" name="id" value={n.id} />
+            <button class="text-red-500 text-xs font-medium hover:underline">Eliminar</button>
+          </form>
+        </div>
       </div>
     ))}
   </div>
